@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid">
+  <h3 class="mb-4">Dashboard</h3>
+
+  <!-- KPI CARDS -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Total Vendors</div>
+          <div class="fs-3 fw-bold">{{ total_vendors }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Approved Vendors</div>
+          <div class="fs-3 fw-bold text-success">{{ approved_vendors }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Total Requests</div>
+          <div class="fs-3 fw-bold">{{ total_requests }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Pending Approval</div>
+          <div class="fs-3 fw-bold text-warning">{{ pending_requests }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <strong>Procurement Status Overview</strong>
+        </div>
+        <div class="card-body">
+          <canvas id="statusChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <strong>Recent Requests Trend</strong>
+        </div>
+        <div class="card-body">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECENT REQUESTS -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-white">
+      <strong>Recent Procurement Requests</strong>
+    </div>
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Item</th>
+            <th>Status</th>
+            <th>Created By</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in recent_requests %}
+          <tr>
+            <td>#{{ r.id }}</td>
+            <td>{{ r.item_name }}</td>
+            <td>
+              <span class="badge
+                {% if r.status == 'approved' %}bg-success
+                {% elif r.status == 'submitted' %}bg-warning
+                {% elif r.status == 'rejected' %}bg-danger
+                {% else %}bg-secondary{% endif %}">
+                {{ r.status|upper }}
+              </span>
+            </td>
+            <td>{{ r.created_by }}</td>
+            <td>
+              <a href="/procurement/{{ r.id }}" class="btn btn-sm btn-outline-dark">
+                View
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">
+              No procurement activity yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const statusLabels = {{ status_labels | default([]) | tojson }};
+  const statusValues = {{ status_values | default([]) | tojson }};
+  const trendLabels = {{ trend_labels | default([]) | tojson }};
+  const trendValues = {{ trend_values | default([]) | tojson }};
+
+  new Chart(document.getElementById('statusChart'), {
+    type: 'bar',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        data: statusValues,
+        backgroundColor: '#212529'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [{
+        data: trendValues,
+        borderColor: '#0d6efd',
+        tension: 0.3,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } }
+    }
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    h1, h2 { margin-bottom: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #333; padding: 6px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+
+<h1>QueensMeal Procurement Approval Memo</h1>
+
+<h2>Request Details</h2>
+<table>
+  <tr><th>Item</th><td>{{ req.item_name }}</td></tr>
+  <tr><th>Vendor</th><td>{{ req.vendor.company_name }}</td></tr>
+  <tr><th>Status</th><td>{{ req.status }}</td></tr>
+  <tr><th>Created By</th><td>{{ req.created_by }}</td></tr>
+  <tr>
+    <th>Quotation</th>
+    <td>{{ "Uploaded" if req.quotation_file else "Not Uploaded" }}</td>
+  </tr>
+</table>
+
+<h2>Approval History</h2>
+<table>
+  <tr>
+    <th>Action</th>
+    <th>User</th>
+    <th>Role</th>
+    <th>Date</th>
+  </tr>
+  {% for log in logs %}
+  <tr>
+    <td>{{ log.action }}</td>
+    <td>{{ log.performed_by }}</td>
+    <td>{{ log.role }}</td>
+    <td>{{ log.timestamp.strftime("%Y-%m-%d %H:%M") }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<p style="margin-top:20px;">
+  This document was system-generated and is valid without signature.
+</p>
+
+</body>
+</html>

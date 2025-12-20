@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+  <div>
+    <h3 class="mb-1">Procurement</h3>
+    <div class="text-muted">Track requests, approvals, and documentation.</div>
+  </div>
+
+  <div class="d-flex gap-2">
+    {% if current_user.role in ["branch","procurement"] %}
+      <a href="/procurement/new" class="btn btn-dark">
+        <i class="bi bi-plus-circle me-1"></i> New Request
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Total Requests</div>
+        <div class="fs-4 fw-semibold">{{ requests|length }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Approved</div>
+        <div class="fs-4 fw-semibold text-success">
+          {{ requests|selectattr("status","equalto","approved")|list|length }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Pending</div>
+        <div class="fs-4 fw-semibold text-warning">
+          {{ requests|selectattr("status","in",["draft","submitted","reviewed"])|list|length }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="text-muted small">Rejected</div>
+        <div class="fs-4 fw-semibold text-danger">
+          {{ requests|selectattr("status","equalto","rejected")|list|length }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Item</th>
+            <th>Vendor</th>
+            <th>Status</th>
+            <th>Quotation</th>
+            <th>Raised By</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+        {% for r in requests %}
+          <tr>
+            <td class="text-muted">#{{ r.id }}</td>
+
+            <td class="fw-semibold">
+              <a class="text-decoration-none" href="/procurement/{{ r.id }}">
+                {{ r.item_name }}
+              </a>
+            </td>
+
+            <td>
+              <span class="badge text-bg-light border">
+                {{ r.vendor.company_name if r.vendor else "—" }}
+              </span>
+            </td>
+
+            <td>
+              {% if r.status == "approved" %}
+                <span class="badge text-bg-success">APPROVED</span>
+              {% elif r.status in ["draft","submitted","reviewed"] %}
+                <span class="badge text-bg-warning">PENDING</span>
+              {% elif r.status == "rejected" %}
+                <span class="badge text-bg-danger">REJECTED</span>
+              {% elif r.status == "closed" %}
+                <span class="badge text-bg-secondary">CLOSED</span>
+              {% else %}
+                <span class="badge text-bg-dark">{{ r.status|upper }}</span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if r.quotation_file %}
+                <span class="badge text-bg-success">
+                  <i class="bi bi-check2-circle me-1"></i> Uploaded
+                </span>
+              {% else %}
+                <span class="badge text-bg-light border text-muted">
+                  <i class="bi bi-x-circle me-1"></i> Missing
+                </span>
+              {% endif %}
+            </td>
+
+            <td class="text-muted">{{ r.created_by }}</td>
+
+            <td class="text-end">
+              <a href="/procurement/{{ r.id }}" class="btn btn-sm btn-outline-dark">
+                View
+              </a>
+              <a href="/procurement/{{ r.id }}/pdf" class="btn btn-sm btn-outline-secondary">
+                PDF
+              </a>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              No procurement requests yet.
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
