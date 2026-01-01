@@ -1,172 +1,162 @@
+# app/routes/procurement.py
 import os
-from flask import Blueprint, render_template, request, redirect, url_for, abort, send_from_directory
+from datetime import datetime
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, send_from_directory
 from flask_login import login_required, current_user
-from werkzeug.utils import secure_filename
 
 from app.extensions import db
-from app.models.procurement import ProcurementRequest
-from app.models.vendor import Vendor
+from app.constants import FINANCE_LIMIT
+from app.models.procurement_request import ProcurementRequest
 from app.models.audit_log import AuditLog
-from app.mailers import notify
-from app.whatsapp import send_whatsapp
-
-UPLOAD_ROOT = "uploads/requests"
+from app.models.vendor import Vendor  # assumes you have app/models/vendor.py
 
 procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
 
 
-def _require_roles(*roles):
-    if current_user.role not in roles:
-        abort(403)
-
-
-def _log(action, req_id):
-    log = AuditLog(
-        entity_type="procurement",
-        entity_id=req_id,
-        action=action,
-        performed_by=current_user.username,
-        role=current_user.role,
+def _log(action, entity_type=None, entity_id=None, details=None):
+    db.session.add(
+        AuditLog(
+            username=getattr(current_user, "username", None),
+            role=getattr(current_user, "role", None),
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            details=details,
+        )
     )
-    db.session.add(log)
 
 
 @procurement_bp.route("/")
 @login_required
 def list_requests():
-    requests = ProcurementRequest.query.all()
-    return render_template("procurement/list.html", requests=requests)
+    requests_q = ProcurementRequest.query.order_by(ProcurementRequest.created_at.desc()).all()
+    return render_template("procurement/list.html", requests=requests_q)
 
 
-@procurement_bp.route("/new", methods=["GET", "POST"])
+@procurement_bp.route("/create", methods=["GET", "POST"])
 @login_required
-def new_request():
-    _require_roles("branch", "procurement")
-    vendors = Vendor.query.filter_by(status="approved").all()
+def create_request():
+    if current_user.role != "procurement":
+        flash("Access denied", "danger")
+        return redirect(url_for("procurement.list_requests"))
+
+    vendors = Vendor.query.order_by(Vendor.name.asc()).all()
 
     if request.method == "POST":
-        vendor = Vendor.query.get(request.form.get("vendor_id"))
-        if not vendor:
-            abort(400)
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        amount = request.form.get("amount", "").strip()
+        vendor_id = request.form.get("vendor_id") or None
+        needed_by = request.form.get("needed_by") or None
 
-        req = ProcurementRequest(
-            item_name=request.form.get("item_name"),
-            vendor_id=vendor.id,
+        if not title or not amount:
+            flash("Title and Amount are required.", "danger")
+            return render_template("procurement/create.html", vendors=vendors)
+
+        # quotation upload
+        quotation_file = request.files.get("quotation")
+        quotation_filename = None
+        if quotation_file and quotation_file.filename:
+            upload_dir = os.path.join(current_app.root_path, "static", "uploads", "quotations")
+            os.makedirs(upload_dir, exist_ok=True)
+            safe_name = f"PR_{int(datetime.utcnow().timestamp())}_{quotation_file.filename}".replace(" ", "_")
+            quotation_path = os.path.join(upload_dir, safe_name)
+            quotation_file.save(quotation_path)
+            quotation_filename = safe_name
+
+        pr = ProcurementRequest(
+            title=title,
+            description=description,
+            amount=amount,
+            vendor_id=int(vendor_id) if vendor_id else None,
             created_by=current_user.username,
-            status="draft",
+            needed_by=needed_by,
+            quotation=quotation_filename,
+            status="pending",
         )
+        db.session.add(pr)
+        db.session.flush()
 
-        db.session.add(req)
+        _log("PROCUREMENT_CREATE", "ProcurementRequest", pr.id, f"title={title}, amount={amount}")
+
         db.session.commit()
+        flash("Procurement request submitted", "success")
+        return redirect(url_for("procurement.view_request", request_id=pr.id))
 
-        _log("created", req.id)
-        db.session.commit()
-
-        notify(
-            subject="New Procurement Request Created",
-            body=f"'{req.item_name}' was created by {current_user.username}.",
-            to_roles=["procurement", "finance"],
-        )
-
-        return redirect(url_for("procurement.request_detail", req_id=req.id))
-
-    return render_template("procurement/view.html", vendors=vendors)
+    return render_template("procurement/create.html", vendors=vendors)
 
 
-@procurement_bp.route("/<int:req_id>")
+@procurement_bp.route("/quotation/<path:filename>")
 @login_required
-def request_detail(req_id):
-    req = ProcurementRequest.query.get_or_404(req_id)
-    logs = AuditLog.query.filter_by(
-        entity_type="procurement", entity_id=req.id
-    ).order_by(AuditLog.timestamp.desc()).all()
-
-    return render_template("procurement/detail.html", req=req, logs=logs)
+def view_quotation(filename):
+    upload_dir = os.path.join(current_app.root_path, "static", "uploads", "quotations")
+    return send_from_directory(upload_dir, filename, as_attachment=False)
 
 
-@procurement_bp.route("/<int:req_id>/upload", methods=["POST"])
+@procurement_bp.route("/<int:request_id>")
 @login_required
-def upload_quotation(req_id):
-    _require_roles("branch", "procurement")
-    req = ProcurementRequest.query.get_or_404(req_id)
+def view_request(request_id):
+    pr = ProcurementRequest.query.get_or_404(request_id)
 
-    file = request.files.get("quotation")
-    if not file:
-        abort(400)
+    # Access rules (frozen, simple)
+    # procurement can view all; director can view all; finance can view approved only
+    if current_user.role == "finance" and pr.status != "approved":
+        flash("Finance can only view approved requests.", "warning")
+        return redirect(url_for("procurement.list_requests"))
 
-    folder = os.path.join(UPLOAD_ROOT, str(req.id))
-    os.makedirs(folder, exist_ok=True)
+    total_paid = float(pr.payments.with_entities(db.func.coalesce(db.func.sum(db.cast(db.text("amount"), db.Numeric(12,2))), 0)).scalar() or 0) if hasattr(pr, "payments") else 0
 
-    filename = secure_filename(file.filename)
-    file.save(os.path.join(folder, filename))
+    return render_template(
+        "procurement/view.html",
+        pr=pr,
+        finance_limit=FINANCE_LIMIT,
+        total_paid=total_paid,
+    )
 
-    req.quotation_file = filename
-    _log("uploaded quotation", req.id)
+
+@procurement_bp.route("/approve/<int:request_id>", methods=["POST"])
+@login_required
+def approve_request(request_id):
+    if current_user.role != "director":
+        flash("Access denied", "danger")
+        return redirect(url_for("procurement.list_requests"))
+
+    pr = ProcurementRequest.query.get_or_404(request_id)
+
+    if pr.status != "pending":
+        flash("Request already processed", "warning")
+        return redirect(url_for("procurement.view_request", request_id=request_id))
+
+    pr.status = "approved"
+    pr.approved_by = current_user.username
+    pr.approved_at = datetime.utcnow()
+
+    _log("PROCUREMENT_APPROVE", "ProcurementRequest", pr.id, f"approved_by={current_user.username}")
+
     db.session.commit()
+    flash("Request approved", "success")
+    return redirect(url_for("procurement.view_request", request_id=request_id))
 
-    return redirect(url_for("procurement.request_detail", req_id=req.id))
 
-
-@procurement_bp.route("/<int:req_id>/action/<string:action>", methods=["POST"])
+@procurement_bp.route("/reject/<int:request_id>", methods=["POST"])
 @login_required
-def request_action(req_id, action):
-    req = ProcurementRequest.query.get_or_404(req_id)
+def reject_request(request_id):
+    if current_user.role != "director":
+        flash("Access denied", "danger")
+        return redirect(url_for("procurement.list_requests"))
 
-    if action == "submit":
-        _require_roles("branch", "procurement")
-        req.status = "submitted"
+    pr = ProcurementRequest.query.get_or_404(request_id)
 
-        notify(
-            subject="Procurement Submitted",
-            body=f"Request #{req.id} awaits your approval.",
-            to_roles=["director"],
-        )
+    if pr.status != "pending":
+        flash("Request already processed", "warning")
+        return redirect(url_for("procurement.view_request", request_id=request_id))
 
-        send_whatsapp(
-            f"🛒 PROCUREMENT SUBMITTED\n\n"
-            f"Request #{req.id}\n"
-            f"Item: {req.item_name}\n"
-            f"Awaiting your approval."
-        )
+    pr.status = "rejected"
+    pr.rejected_by = current_user.username
+    pr.rejected_at = datetime.utcnow()
 
-    elif action == "approve":
-        _require_roles("finance", "director")
-        req.status = "approved"
+    _log("PROCUREMENT_REJECT", "ProcurementRequest", pr.id, f"rejected_by={current_user.username}")
 
-        notify(
-            subject="Procurement Approved",
-            body=f"Request #{req.id} has been approved.",
-            to_roles=["procurement"],
-            extra_emails=[f"{req.created_by}@queensmeal.com"],
-        )
-
-        send_whatsapp(
-            f"✅ PROCUREMENT APPROVED\n\n"
-            f"Request #{req.id}\n"
-            f"Item: {req.item_name}"
-        )
-
-    elif action == "reject":
-        _require_roles("director")
-        req.status = "rejected"
-
-        notify(
-            subject="Procurement Rejected",
-            body=f"Request #{req.id} has been rejected.",
-            to_roles=["procurement"],
-            extra_emails=[f"{req.created_by}@queensmeal.com"],
-        )
-
-        send_whatsapp(
-            f"❌ PROCUREMENT REJECTED\n\n"
-            f"Request #{req.id}\n"
-            f"Item: {req.item_name}"
-        )
-
-    else:
-        abort(400)
-
-    _log(action, req.id)
     db.session.commit()
-
-    return redirect(url_for("procurement.request_detail", req_id=req.id))
+    flash("Request rejected", "warning")
+    return redirect(url_for("procurement.view_request", request_id=request_id))

@@ -1,86 +1,62 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-  <div>
-    <h3 class="mb-1">Vendors</h3>
-    <div class="text-muted">Approved and pending suppliers.</div>
-  </div>
-
-  {% if current_user.role in ["procurement","director"] %}
-    <a href="/vendors/new" class="btn btn-dark">
-      <i class="bi bi-plus-circle me-1"></i> Add Vendor
-    </a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold">Vendors</h3>
+  {% if current_user.role in ["procurement", "director"] %}
+    <a class="btn btn-primary" href="{{ url_for('vendors.create_vendor') }}">+ Add Vendor</a>
   {% endif %}
 </div>
 
-<div class="card shadow-sm">
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>ID</th>
-            <th>Company Name</th>
-            <th>Status</th>
-            <th class="text-end">Actions</th>
-          </tr>
-        </thead>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} mb-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
 
-        <tbody>
-        {% for v in vendors %}
-          <tr>
-            <td class="text-muted">#{{ v.id }}</td>
-
-            <td class="fw-semibold">
-              <a href="/vendors/{{ v.id }}" class="text-decoration-none">
-                {{ v.company_name }}
-              </a>
-            </td>
-
-            <td>
-              {% if v.status == "approved" %}
-                <span class="badge text-bg-success">APPROVED</span>
-              {% elif v.status == "pending" %}
-                <span class="badge text-bg-warning">PENDING</span>
-              {% elif v.status == "rejected" %}
-                <span class="badge text-bg-danger">REJECTED</span>
-              {% else %}
-                <span class="badge text-bg-secondary">{{ v.status|upper }}</span>
-              {% endif %}
-            </td>
-
-            <td class="text-end">
-              <a href="/vendors/{{ v.id }}" class="btn btn-sm btn-outline-dark">
-                View
-              </a>
-
-              {% if current_user.role == "director" %}
-                {% if v.status != "approved" %}
-                  <form method="post" action="/vendors/{{ v.id }}/action/approve" class="d-inline">
-                    <button class="btn btn-sm btn-outline-success">Approve</button>
-                  </form>
-                {% endif %}
-                {% if v.status != "rejected" %}
-                  <form method="post" action="/vendors/{{ v.id }}/action/reject" class="d-inline">
-                    <button class="btn btn-sm btn-outline-danger">Reject</button>
-                  </form>
-                {% endif %}
-              {% endif %}
-            </td>
-          </tr>
-        {% else %}
-          <tr>
-            <td colspan="4" class="text-center text-muted py-4">
-              No vendors added yet.
-            </td>
-          </tr>
-        {% endfor %}
-        </tbody>
-
-      </table>
-    </div>
-  </div>
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Bank</th>
+        <th>Account</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in vendors %}
+      <tr>
+        <td class="fw-semibold">{{ v.name }}</td>
+        <td>{{ v.category or "-" }}</td>
+        <td>{{ v.phone or "-" }}</td>
+        <td>{{ v.email or "-" }}</td>
+        <td>{{ v.bank_name or "-" }}</td>
+        <td>
+          {% if v.account_number %}
+            {{ v.account_number }}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('vendors.view_vendor', vendor_id=v.id) }}">View</a>
+          {% if current_user.role in ["procurement", "director"] %}
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('vendors.edit_vendor', vendor_id=v.id) }}">Edit</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      {% if vendors|length == 0 %}
+      <tr><td colspan="7" class="text-center text-muted py-4">No vendors yet.</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
 </div>
 
 {% endblock %}

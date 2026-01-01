@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <h4>Payments</h4>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Request ID</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Reference</th>
+          <th>Receipt</th>
+          <th>Paid By</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for p in payments %}
+        <tr>
+          <td>{{ p.id }}</td>
+          <td>
+            <a href="{{ url_for('procurement.view_request', request_id=p.procurement_request_id) }}">
+              #{{ p.procurement_request_id }}
+            </a>
+          </td>
+          <td>₦{{ "{:,.2f}".format(p.amount|float) }}</td>
+          <td>{{ p.method or "-" }}</td>
+          <td>{{ p.reference or "-" }}</td>
+          <td>
+            {% if p.receipt %}
+              <a target="_blank" href="{{ url_for('finance.view_receipt', filename=p.receipt) }}">View</a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ p.paid_by or "-" }}</td>
+          <td>{{ (p.paid_at or p.created_at).strftime("%d %b %Y %H:%M") }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

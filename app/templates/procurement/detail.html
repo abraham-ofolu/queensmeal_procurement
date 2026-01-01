@@ -1,190 +1,83 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="container mt-4">
 
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-  <div>
-    <h3 class="mb-1">Request #{{ req.id }}</h3>
-    <div class="text-muted">Review details, upload quotation, and progress the workflow.</div>
-  </div>
-
-  <div class="d-flex gap-2">
-    <a href="/procurement/{{ req.id }}/pdf" class="btn btn-outline-secondary">
-      <i class="bi bi-filetype-pdf me-1"></i> PDF
-    </a>
-    <a href="/procurement/" class="btn btn-outline-dark">
-      <i class="bi bi-arrow-left me-1"></i> Back
-    </a>
-  </div>
-</div>
-
-<div class="row g-3">
-  <!-- Left: Details -->
-  <div class="col-lg-7">
-    <div class="card shadow-sm mb-3">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="mb-0">Request Details</h5>
-          <div>
-            {% if req.status == "approved" %}
-              <span class="badge text-bg-success">APPROVED</span>
-            {% elif req.status in ["draft","submitted","reviewed"] %}
-              <span class="badge text-bg-warning">PENDING</span>
-            {% elif req.status == "rejected" %}
-              <span class="badge text-bg-danger">REJECTED</span>
-            {% elif req.status == "closed" %}
-              <span class="badge text-bg-secondary">CLOSED</span>
-            {% else %}
-              <span class="badge text-bg-dark">{{ req.status|upper }}</span>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="row g-3">
-          <div class="col-md-6">
-            <div class="text-muted small">Item</div>
-            <div class="fw-semibold">{{ req.item_name }}</div>
-          </div>
-          <div class="col-md-6">
-            <div class="text-muted small">Vendor</div>
-            <div class="fw-semibold">{{ req.vendor.company_name }}</div>
-          </div>
-          <div class="col-md-6">
-            <div class="text-muted small">Raised By</div>
-            <div class="fw-semibold">{{ req.created_by }}</div>
-          </div>
-          <div class="col-md-6">
-            <div class="text-muted small">Quotation Status</div>
-            {% if req.quotation_file %}
-              <span class="badge text-bg-success">
-                <i class="bi bi-check2-circle me-1"></i> Uploaded
-              </span>
-            {% else %}
-              <span class="badge text-bg-light border text-muted">
-                <i class="bi bi-x-circle me-1"></i> Missing
-              </span>
-            {% endif %}
-          </div>
-        </div>
-
-        {% if req.quotation_file %}
-          <div class="mt-3">
-            <a class="btn btn-sm btn-outline-dark" href="/procurement/file/{{ req.id }}/{{ req.quotation_file }}" target="_blank">
-              <i class="bi bi-paperclip me-1"></i> View Quotation
-            </a>
-          </div>
-        {% endif %}
-      </div>
+  <div class="d-flex justify-content-between align-items-start">
+    <div>
+      <h3 class="fw-bold">Request #{{ pr.id }} — {{ pr.title }}</h3>
+      <div class="text-muted">Created by {{ pr.created_by }} on {{ pr.created_at.strftime("%Y-%m-%d %H:%M") }}</div>
     </div>
 
-    <!-- Upload -->
-    <div class="card shadow-sm mb-3">
-      <div class="card-body">
-        <h5 class="mb-2">Upload Quotation</h5>
-        <div class="text-muted small mb-2">PDF only recommended. Required before approval.</div>
+    <div>
+      {% if current_user.role == "director" %}
+        <form method="POST" action="{{ url_for('procurement.approve_request', request_id=pr.id) }}" style="display:inline;">
+          <button class="btn btn-success">Approve</button>
+        </form>
+        <form method="POST" action="{{ url_for('procurement.reject_request', request_id=pr.id) }}" style="display:inline;">
+          <button class="btn btn-danger">Reject</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
 
-        {% if current_user.role in ["branch","procurement"] %}
-          <form method="post" enctype="multipart/form-data" action="/procurement/{{ req.id }}/upload">
-            <div class="row g-2 align-items-center">
-              <div class="col-md-8">
-                <input type="file" name="quotation" accept=".pdf" class="form-control" required>
-              </div>
-              <div class="col-md-4">
-                <button class="btn btn-dark w-100">
-                  <i class="bi bi-upload me-1"></i> Upload
-                </button>
-              </div>
+  <hr>
+
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-3">
+        <div class="card-body">
+          <div><strong>Status:</strong> <span class="badge bg-secondary">{{ pr.status }}</span></div>
+          <div class="mt-2"><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</div>
+          <div class="mt-2"><strong>Paid:</strong> ₦{{ "{:,.2f}".format(paid_total) }}</div>
+          <div class="mt-2"><strong>Outstanding:</strong> ₦{{ "{:,.2f}".format(outstanding) }}</div>
+
+          {% if pr.needed_by %}
+            <div class="mt-2"><strong>Needed By:</strong> {{ pr.needed_by.strftime("%Y-%m-%d") }}</div>
+          {% endif %}
+
+          {% if pr.quotation_filename %}
+            <div class="mt-2"><strong>Quotation:</strong> {{ pr.quotation_filename }}</div>
+          {% endif %}
+
+          {% if current_user.role in ["director", "finance"] and pr.status in ["approved", "part_paid", "paid"] %}
+            <div class="mt-3">
+              <a class="btn btn-primary" href="{{ url_for('finance.create_payment', request_id=pr.id) }}">Record Payment</a>
             </div>
-          </form>
-        {% else %}
-          <div class="alert alert-light border mb-0">
-            You do not have permission to upload quotations.
-          </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="mb-2">Workflow Actions</h5>
-        <div class="text-muted small mb-3">Buttons appear based on your role.</div>
-
-        <div class="d-flex flex-wrap gap-2">
-          {% if current_user.role in ["branch","procurement"] %}
-            <form method="post" action="/procurement/{{ req.id }}/action/submit">
-              <button class="btn btn-outline-dark">
-                <i class="bi bi-send me-1"></i> Submit
-              </button>
-            </form>
-          {% endif %}
-
-          {% if current_user.role in ["procurement","audit"] %}
-            <form method="post" action="/procurement/{{ req.id }}/action/review">
-              <button class="btn btn-outline-primary">
-                <i class="bi bi-search me-1"></i> Review
-              </button>
-            </form>
-          {% endif %}
-
-          {% if current_user.role in ["finance","director"] %}
-            <form method="post" action="/procurement/{{ req.id }}/action/approve">
-              <button class="btn btn-outline-success">
-                <i class="bi bi-check2-circle me-1"></i> Approve
-              </button>
-            </form>
-          {% endif %}
-
-          {% if current_user.role == "director" %}
-            <form method="post" action="/procurement/{{ req.id }}/action/reject">
-              <button class="btn btn-outline-danger">
-                <i class="bi bi-x-circle me-1"></i> Reject
-              </button>
-            </form>
-
-            <form method="post" action="/procurement/{{ req.id }}/action/close">
-              <button class="btn btn-outline-secondary">
-                <i class="bi bi-lock me-1"></i> Close
-              </button>
-            </form>
           {% endif %}
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Right: Audit log -->
-  <div class="col-lg-5">
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h5 class="mb-0">Audit Log</h5>
-          <span class="badge text-bg-light border">{{ logs|length }} entries</span>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="fw-bold">Description</h5>
+          <div>{{ pr.description or "—" }}</div>
         </div>
+      </div>
+    </div>
 
-        {% if logs and logs|length > 0 %}
-          <div class="list-group">
-            {% for log in logs %}
-              <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-start">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="fw-bold">Payments</h5>
+          {% if payments %}
+            <ul class="list-group">
+              {% for p in payments %}
+                <li class="list-group-item d-flex justify-content-between">
                   <div>
-                    <div class="fw-semibold">{{ log.action|upper }}</div>
-                    <div class="text-muted small">
-                      {{ log.performed_by }} ({{ log.role }})
-                    </div>
+                    <div><strong>₦{{ "{:,.2f}".format(p.amount) }}</strong> — {{ p.method }}</div>
+                    <div class="text-muted" style="font-size: 0.9rem;">{{ p.paid_at.strftime("%Y-%m-%d %H:%M") }} • by {{ p.created_by }}</div>
+                    {% if p.reference %}<div class="text-muted" style="font-size: 0.9rem;">Ref: {{ p.reference }}</div>{% endif %}
                   </div>
-                  <div class="text-muted small">
-                    {{ log.timestamp.strftime("%Y-%m-%d %H:%M") }}
-                  </div>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        {% else %}
-          <div class="text-muted">No actions yet.</div>
-        {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No payments recorded yet.</div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
-</div>
 
+</div>
 {% endblock %}

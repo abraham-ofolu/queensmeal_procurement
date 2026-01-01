@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Management Reports</h2>
+
+<hr>
+
+<h4>Financial Overview</h4>
+<ul>
+  <li><strong>Total Requests:</strong> {{ total_requests }}</li>
+  <li><strong>Total Requested Value:</strong> ₦{{ total_requested_value }}</li>
+  <li><strong>Total Approved Value:</strong> ₦{{ total_approved_value }}</li>
+  <li><strong>Total Paid:</strong> ₦{{ total_paid_value }}</li>
+  <li><strong>Outstanding (Pending):</strong> ₦{{ pending_value }}</li>
+</ul>
+
+<hr>
+
+<h4>Procurement Status Breakdown</h4>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Status</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for status, count in status_summary.items() %}
+    <tr>
+      <td>{{ status }}</td>
+      <td>{{ count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr>
+
+<h4>Recent Procurement Requests</h4>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for pr in recent_procurements %}
+    <tr>
+      <td>{{ pr.title }}</td>
+      <td>₦{{ pr.amount }}</td>
+      <td>{{ pr.status }}</td>
+      <td>{{ pr.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<hr>
+
+<h4>Recent Payments</h4>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Amount</th>
+      <th>Paid By</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in recent_payments %}
+    <tr>
+      <td>{{ p.description }}</td>
+      <td>₦{{ p.amount }}</td>
+      <td>{{ p.paid_by }}</td>
+      <td>{{ p.paid_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

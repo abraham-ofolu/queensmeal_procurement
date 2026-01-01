@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 class="fw-bold mb-3">Edit Vendor</h3>
+
+<form method="post" class="card p-3">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Vendor Name *</label>
+      <input name="name" class="form-control" value="{{ vendor.name }}" required>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Category</label>
+      <input name="category" class="form-control" value="{{ vendor.category or '' }}">
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Phone</label>
+      <input name="phone" class="form-control" value="{{ vendor.phone or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Email</label>
+      <input name="email" class="form-control" value="{{ vendor.email or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Contact Person</label>
+      <input name="contact_person" class="form-control" value="{{ vendor.contact_person or '' }}">
+    </div>
+
+    <div class="col-md-12">
+      <label class="form-label">Address</label>
+      <input name="address" class="form-control" value="{{ vendor.address or '' }}">
+    </div>
+
+    <hr class="my-2">
+
+    <div class="col-md-4">
+      <label class="form-label">Bank Name</label>
+      <input name="bank_name" class="form-control" value="{{ vendor.bank_name or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Account Name</label>
+      <input name="account_name" class="form-control" value="{{ vendor.account_name or '' }}">
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Account Number</label>
+      <input name="account_number" class="form-control" value="{{ vendor.account_number or '' }}">
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Bank Code</label>
+      <input name="bank_code" class="form-control" value="{{ vendor.bank_code or '' }}">
+    </div>
+
+    <div class="col-md-12">
+      <label class="form-label">Notes</label>
+      <textarea name="notes" class="form-control" rows="3">{{ vendor.notes or '' }}</textarea>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Save Changes</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('vendors.view_vendor', vendor_id=vendor.id) }}">Cancel</a>
+    </div>
+  </div>
+</form>
+
+{% endblock %}

@@ -1,55 +1,51 @@
+# app/routes/reports.py
 from flask import Blueprint, render_template
 from flask_login import login_required
-from sqlalchemy import func
 
-from app.models.vendor import Vendor
-from app.models.procurement import ProcurementRequest
+from app.extensions import db
+from app.models.procurement_request import ProcurementRequest
+from app.models.payment import Payment
 
 reports_bp = Blueprint("reports", __name__, url_prefix="/reports")
 
 
-@reports_bp.route("/dashboard")
+@reports_bp.route("/")
 @login_required
-def dashboard():
-    total_vendors = Vendor.query.count()
-    approved_vendors = Vendor.query.filter_by(status="approved").count()
-    total_requests = ProcurementRequest.query.count()
-
-    pending_requests = ProcurementRequest.query.filter(
-        ProcurementRequest.status == "submitted"
-    ).count()
-
-    # Status chart data
-    status_data = (
-        ProcurementRequest.query
-        .with_entities(ProcurementRequest.status, func.count())
+def index():
+    # status counts
+    status_counts = (
+        db.session.query(ProcurementRequest.status, db.func.count(ProcurementRequest.id))
         .group_by(ProcurementRequest.status)
         .all()
     )
+    status_labels = [s[0] for s in status_counts]
+    status_values = [int(s[1]) for s in status_counts]
 
-    status_labels = [s[0].title() for s in status_data] if status_data else []
-    status_values = [s[1] for s in status_data] if status_data else []
-
-    # Trend (last 7)
-    recent_requests = (
-        ProcurementRequest.query
-        .order_by(ProcurementRequest.id.desc())
-        .limit(7)
+    # monthly payments (last 6 months approx by created_at)
+    # works even if some are null
+    monthly = (
+        db.session.query(
+            db.func.to_char(Payment.created_at, "YYYY-MM"),
+            db.func.coalesce(db.func.sum(Payment.amount), 0),
+        )
+        .group_by(db.func.to_char(Payment.created_at, "YYYY-MM"))
+        .order_by(db.func.to_char(Payment.created_at, "YYYY-MM").desc())
+        .limit(6)
         .all()
-    )[::-1]
+    )
+    monthly = list(reversed(monthly))
+    month_labels = [m[0] for m in monthly]
+    month_values = [float(m[1] or 0) for m in monthly]
 
-    trend_labels = [f"#{r.id}" for r in recent_requests] if recent_requests else []
-    trend_values = list(range(1, len(recent_requests) + 1)) if recent_requests else []
+    total_requests = ProcurementRequest.query.count()
+    total_paid = float(db.session.query(db.func.coalesce(db.func.sum(Payment.amount), 0)).scalar() or 0)
 
     return render_template(
-        "reports/dashboard.html",
-        total_vendors=total_vendors,
-        approved_vendors=approved_vendors,
-        total_requests=total_requests,
-        pending_requests=pending_requests,
+        "reports/index.html",
         status_labels=status_labels,
         status_values=status_values,
-        trend_labels=trend_labels,
-        trend_values=trend_values,
-        recent_requests=recent_requests,
+        month_labels=month_labels,
+        month_values=month_values,
+        total_requests=total_requests,
+        total_paid=total_paid,
     )

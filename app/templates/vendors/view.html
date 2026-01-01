@@ -1,194 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-  <div>
-    <h3 class="mb-1">
-      {% if vendor %}Vendor Details{% else %}New Vendor{% endif %}
-    </h3>
-    <div class="text-muted">
-      Supplier profile, compliance & banking information.
-    </div>
-  </div>
-
-  <a href="/vendors/" class="btn btn-outline-secondary">
-    <i class="bi bi-arrow-left me-1"></i> Back
-  </a>
-</div>
-
-<div class="card shadow-sm">
-  <div class="card-body">
-
-{% if vendor %}
-<!-- VIEW MODE -->
-
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <div class="text-muted small">Company Name</div>
-    <div class="fw-semibold fs-5">{{ vendor.company_name }}</div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="text-muted small">Vendor Type</div>
-    <div class="fw-semibold">{{ vendor.vendor_type }}</div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="text-muted small">Contact Person</div>
-    <div>{{ vendor.contact_person or "—" }}</div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="text-muted small">Phone</div>
-    <div>{{ vendor.phone or "—" }}</div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="text-muted small">Email</div>
-    <div>{{ vendor.email or "—" }}</div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="text-muted small">Address</div>
-    <div>{{ vendor.address or "—" }}</div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold">{{ vendor.name }}</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{{ url_for('vendors.list_vendors') }}">Back</a>
+    {% if current_user.role in ["procurement", "director"] %}
+      <a class="btn btn-outline-primary" href="{{ url_for('vendors.edit_vendor', vendor_id=vendor.id) }}">Edit</a>
+    {% endif %}
   </div>
 </div>
 
-<hr>
-
-<h5 class="mb-2">Bank Details</h5>
-<div class="row g-3 mb-3">
-  <div class="col-md-4">
-    <div class="text-muted small">Bank</div>
-    <div>{{ vendor.bank_name or "—" }}</div>
-  </div>
-  <div class="col-md-4">
-    <div class="text-muted small">Account Name</div>
-    <div>{{ vendor.account_name or "—" }}</div>
-  </div>
-  <div class="col-md-4">
-    <div class="text-muted small">Account Number</div>
-    <div>{{ vendor.account_number or "—" }}</div>
-  </div>
-</div>
-
-<hr>
-
-<h5 class="mb-2">Compliance</h5>
-<div class="row g-3 mb-3">
-  <div class="col-md-6">
-    <div class="text-muted small">CAC / RC Number</div>
-    <div>{{ vendor.cac_number or "—" }}</div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="text-muted small">Status</div>
-    <span class="badge 
-      {% if vendor.status=='approved' %}text-bg-success
-      {% elif vendor.status=='pending' %}text-bg-warning
-      {% else %}text-bg-danger{% endif %}">
-      {{ vendor.status|upper }}
-    </span>
-  </div>
-</div>
-
-{% if vendor.notes %}
-<hr>
-<h6>Internal Notes</h6>
-<p class="text-muted">{{ vendor.notes }}</p>
-{% endif %}
-
-{% if current_user.role == "director" %}
-<hr>
-<div class="d-flex gap-2">
-  {% if vendor.status != "approved" %}
-    <form method="post" action="/vendors/{{ vendor.id }}/action/approve">
-      <button class="btn btn-outline-success">Approve</button>
-    </form>
-  {% endif %}
-  {% if vendor.status != "rejected" %}
-    <form method="post" action="/vendors/{{ vendor.id }}/action/reject">
-      <button class="btn btn-outline-danger">Reject</button>
-    </form>
-  {% endif %}
-</div>
-{% endif %}
-
-{% else %}
-<!-- CREATE MODE -->
-
-<form method="post">
+<div class="card p-3">
   <div class="row g-3">
+    <div class="col-md-4"><div class="text-muted">Category</div><div class="fw-semibold">{{ vendor.category or "-" }}</div></div>
+    <div class="col-md-4"><div class="text-muted">Phone</div><div class="fw-semibold">{{ vendor.phone or "-" }}</div></div>
+    <div class="col-md-4"><div class="text-muted">Email</div><div class="fw-semibold">{{ vendor.email or "-" }}</div></div>
 
-    <div class="col-md-6">
-      <label class="form-label">Company Name</label>
-      <input name="company_name" class="form-control" required>
-    </div>
+    <div class="col-md-6"><div class="text-muted">Contact Person</div><div class="fw-semibold">{{ vendor.contact_person or "-" }}</div></div>
+    <div class="col-md-6"><div class="text-muted">Address</div><div class="fw-semibold">{{ vendor.address or "-" }}</div></div>
 
-    <div class="col-md-6">
-      <label class="form-label">Vendor Type</label>
-      <select name="vendor_type" class="form-select" required>
-        <option value="">Select type</option>
-        <option>Raw Materials</option>
-        <option>Logistics</option>
-        <option>Services</option>
-      </select>
-    </div>
+    <hr class="my-2">
 
-    <div class="col-md-6">
-      <label class="form-label">Contact Person</label>
-      <input name="contact_person" class="form-control">
-    </div>
-
-    <div class="col-md-6">
-      <label class="form-label">Phone</label>
-      <input name="phone" class="form-control">
-    </div>
-
-    <div class="col-md-6">
-      <label class="form-label">Email</label>
-      <input name="email" class="form-control">
-    </div>
-
-    <div class="col-md-6">
-      <label class="form-label">CAC / RC Number</label>
-      <input name="cac_number" class="form-control">
-    </div>
+    <div class="col-md-3"><div class="text-muted">Bank</div><div class="fw-semibold">{{ vendor.bank_name or "-" }}</div></div>
+    <div class="col-md-3"><div class="text-muted">Account Name</div><div class="fw-semibold">{{ vendor.account_name or "-" }}</div></div>
+    <div class="col-md-3"><div class="text-muted">Account Number</div><div class="fw-semibold">{{ vendor.account_number or "-" }}</div></div>
+    <div class="col-md-3"><div class="text-muted">Bank Code</div><div class="fw-semibold">{{ vendor.bank_code or "-" }}</div></div>
 
     <div class="col-12">
-      <label class="form-label">Address</label>
-      <textarea name="address" class="form-control"></textarea>
+      <div class="text-muted">Notes</div>
+      <div class="fw-semibold">{{ vendor.notes or "-" }}</div>
     </div>
-
-    <div class="col-md-4">
-      <label class="form-label">Bank Name</label>
-      <input name="bank_name" class="form-control">
-    </div>
-
-    <div class="col-md-4">
-      <label class="form-label">Account Name</label>
-      <input name="account_name" class="form-control">
-    </div>
-
-    <div class="col-md-4">
-      <label class="form-label">Account Number</label>
-      <input name="account_number" class="form-control">
-    </div>
-
-    <div class="col-12">
-      <label class="form-label">Internal Notes</label>
-      <textarea name="notes" class="form-control"></textarea>
-    </div>
-
-    <div class="col-12 d-flex gap-2">
-      <button class="btn btn-dark">Save Vendor</button>
-      <a href="/vendors/" class="btn btn-outline-secondary">Cancel</a>
-    </div>
-
-  </div>
-</form>
-{% endif %}
-
   </div>
 </div>
 

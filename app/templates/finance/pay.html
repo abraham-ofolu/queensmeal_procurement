@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3>Make Payment</h3>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <p><strong>Request:</strong> {{ pr.title }}</p>
+    <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
+    <p><strong>Status:</strong> {{ pr.status|capitalize }}</p>
+  </div>
+</div>
+
+<form method="POST">
+  <div class="mb-3">
+    <label class="form-label">Payment Description</label>
+    <input
+      type="text"
+      name="description"
+      class="form-control"
+      required
+    >
+  </div>
+
+  <button class="btn btn-success">
+    Confirm Payment
+  </button>
+
+  <a href="{{ url_for('procurement.view_request', request_id=pr.id) }}"
+     class="btn btn-secondary ms-2">
+    Cancel
+  </a>
+</form>
+
+{% endblock %}

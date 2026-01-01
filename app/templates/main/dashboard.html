@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <div class="text-muted">Total Orders</div>
+      <div class="display-6 fw-bold">{{ kpis.total_orders }}</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <div class="text-muted">Total Spend</div>
+      <div class="display-6 fw-bold">₦{{ "{:,.0f}".format(kpis.total_spend) }}</div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <div class="text-muted">Open Requests</div>
+      <div class="display-6 fw-bold">{{ kpis.open_requests }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="card p-3">
+      <h5 class="mb-3">Spend by Month</h5>
+      <canvas id="spendByMonth"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card p-3">
+      <h5 class="mb-3">Top Items</h5>
+      <canvas id="topItems"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Data passed from Flask (already JSON-ready)
+  const spendLabels = {{ charts.spend_labels | tojson }};
+  const spendValues = {{ charts.spend_values | tojson }};
+  const topLabels   = {{ charts.top_labels | tojson }};
+  const topValues   = {{ charts.top_values | tojson }};
+
+  const ctx1 = document.getElementById('spendByMonth');
+  const ctx2 = document.getElementById('topItems');
+
+  new Chart(ctx1, {
+    type: 'line',
+    data: { labels: spendLabels, datasets: [{ label: 'Spend', data: spendValues }] },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+
+  new Chart(ctx2, {
+    type: 'bar',
+    data: { labels: topLabels, datasets: [{ label: 'Qty', data: topValues }] },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+</script>
+
+<style>
+  /* ensure canvases have height */
+  #spendByMonth, #topItems { height: 320px !important; }
+</style>
+{% endblock %}

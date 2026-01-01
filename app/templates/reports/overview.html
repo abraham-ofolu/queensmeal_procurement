@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <h2 class="mb-4">📊 Reports Dashboard</h2>
+
+  <!-- ===================== -->
+  <!-- SUMMARY CARDS -->
+  <!-- ===================== -->
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <small>Total Requests</small>
+          <h3>{{ total_requests }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <small>Pending</small>
+          <h3 class="text-warning">{{ pending_count }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <small>Approved</small>
+          <h3 class="text-success">{{ approved_count }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <small>Rejected</small>
+          <h3 class="text-danger">{{ rejected_count }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- ===================== -->
+  <!-- CHARTS -->
+  <!-- ===================== -->
+  <div class="row">
+    <div class="col-md-6">
+      <h5>Procurement Status Breakdown</h5>
+      <canvas id="procurementChart"></canvas>
+    </div>
+
+    <div class="col-md-6">
+      <h5>Payments by User</h5>
+      <canvas id="paymentsChart"></canvas>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <!-- ===================== -->
+  <!-- FINANCIAL TOTALS -->
+  <!-- ===================== -->
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <small>Total Procurement Value</small>
+          <h4>₦{{ "{:,.2f}".format(total_procurement_value) }}</h4>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <small>Total Paid</small>
+          <h4>₦{{ "{:,.2f}".format(total_paid_amount) }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===================== -->
+<!-- CHART.JS -->
+<!-- ===================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // PROCUREMENT STATUS CHART
+  new Chart(document.getElementById("procurementChart"), {
+    type: "doughnut",
+    data: {
+      labels: ["Pending", "Approved", "Rejected"],
+      datasets: [{
+        data: [
+          {{ pending_count }},
+          {{ approved_count }},
+          {{ rejected_count }}
+        ],
+        backgroundColor: ["#ffc107", "#28a745", "#dc3545"]
+      }]
+    }
+  });
+
+  // PAYMENTS BY USER CHART
+  new Chart(document.getElementById("paymentsChart"), {
+    type: "bar",
+    data: {
+      labels: [
+        {% for user, amount in payments_by_role %}
+          "{{ user or 'Unknown' }}",
+        {% endfor %}
+      ],
+      datasets: [{
+        label: "Amount Paid (₦)",
+        data: [
+          {% for user, amount in payments_by_role %}
+            {{ amount }},
+          {% endfor %}
+        ],
+        backgroundColor: "#0d6efd"
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+{% endblock %}

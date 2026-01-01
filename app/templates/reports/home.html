@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h3 class="mb-4">Reports & Audit Trail</h3>
+
+    <!-- SUMMARY CARDS -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h6>Total Procurement Requests</h6>
+                <h4>{{ total_requests }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h6>Total Requested Amount</h6>
+                <h4>₦{{ "{:,.2f}".format(total_requested_amount) }}</h4>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-3">
+                <h6>Total Paid</h6>
+                <h4>₦{{ "{:,.2f}".format(total_paid) }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROCUREMENT STATUS -->
+    <h5 class="mt-4">Procurement Status Breakdown</h5>
+    <ul>
+        {% for status, count in status_breakdown %}
+            <li><strong>{{ status.title() }}</strong>: {{ count }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- VENDOR TOTALS -->
+    <h5 class="mt-4">Spend by Vendor</h5>
+    <table class="table table-sm table-bordered">
+        <thead>
+            <tr>
+                <th>Vendor</th>
+                <th>Total Requested</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for name, total in vendor_totals %}
+            <tr>
+                <td>{{ name }}</td>
+                <td>₦{{ "{:,.2f}".format(total) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- PAYMENTS BY USER -->
+    <h5 class="mt-4">Payments by User</h5>
+    <ul>
+        {% for user, amount in payments_by_user %}
+            <li>{{ user }} — ₦{{ "{:,.2f}".format(amount) }}</li>
+        {% endfor %}
+    </ul>
+
+    <!-- RECENT PAYMENTS (AUDIT TRAIL) -->
+    <h5 class="mt-4">Recent Payments (Audit Trail)</h5>
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Paid By</th>
+                <th>Description</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in recent_payments %}
+            <tr>
+                <td>{{ p.created_at.strftime("%d %b %Y %H:%M") }}</td>
+                <td>{{ p.paid_by }}</td>
+                <td>{{ p.description }}</td>
+                <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+  <h4 class="fw-bold mb-3">
+    Quotations — {{ request.title }}
+  </h4>
+
+  <form method="post" enctype="multipart/form-data" class="card p-3 mb-4">
+    <div class="row">
+      <div class="col-md-4">
+        <input name="vendor_name" class="form-control"
+               placeholder="Vendor Name" required>
+      </div>
+      <div class="col-md-3">
+        <input type="number" step="0.01" name="quoted_amount"
+               class="form-control" placeholder="Amount" required>
+      </div>
+      <div class="col-md-3">
+        <input type="file" name="quotation" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100">Add</button>
+      </div>
+    </div>
+  </form>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Vendor</th>
+        <th>Amount</th>
+        <th>File</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for q in request.quotations %}
+      <tr>
+        <td>{{ q.vendor_name }}</td>
+        <td>₦{{ "{:,.2f}".format(q.quoted_amount) }}</td>
+        <td>
+          {% if q.quotation_file %}
+            <a href="/{{ q.quotation_file }}" target="_blank">View</a>
+          {% endif %}
+        </td>
+        <td>
+          {% if q.is_selected %}
+            <span class="badge bg-success">Selected</span>
+          {% else %}
+            <span class="badge bg-secondary">Not Selected</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if not q.is_selected and current_user.role in ["director", "finance"] %}
+            <a href="{{ url_for('procurement.select_quotation', quote_id=q.id) }}"
+               class="btn btn-sm btn-outline-success">
+               Select
+            </a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+{% endblock %}

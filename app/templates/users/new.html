@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 class="mb-4">Create New User</h3>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <form method="post">
+
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input name="username" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Role</label>
+        <select name="role" class="form-select" required>
+          <option value="director">Director</option>
+          <option value="procurement">Procurement</option>
+          <option value="finance">Finance</option>
+          <option value="branch">Branch</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+
+      <button class="btn btn-primary">Create User</button>
+      <a href="/users/" class="btn btn-outline-secondary ms-2">Cancel</a>
+
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

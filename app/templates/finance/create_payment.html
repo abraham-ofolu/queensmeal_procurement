@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card shadow-sm">
+  <div class="card-body">
+
+    <h5>Make Payment</h5>
+
+    <p><strong>Request:</strong> {{ pr.title }}</p>
+    <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
+
+    {% if current_user.role == "finance" and pr.amount > finance_limit %}
+      <div class="alert alert-danger">
+        Amount exceeds finance limit. Director approval required.
+      </div>
+    {% else %}
+      <form method="post">
+        <div class="mb-3">
+          <label>Description</label>
+          <input type="text" name="description" class="form-control" required>
+        </div>
+
+        <button class="btn btn-dark">Confirm Payment</button>
+      </form>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

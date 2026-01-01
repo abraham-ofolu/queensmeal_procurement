@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <h4>Record Payment</h4>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div><strong>Request:</strong> {{ pr.title }}</div>
+      <div><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount|float) }}</div>
+      <div class="text-muted">Finance/Procurement limit: ₦{{ "{:,.0f}".format(finance_limit|int) }}</div>
+    </div>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" class="card">
+    <div class="card-body">
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Payment Amount (₦)</label>
+          <input name="amount" type="number" step="0.01" class="form-control" required>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Method</label>
+          <select name="method" class="form-control">
+            <option value="">Select</option>
+            <option>Transfer</option>
+            <option>Cash</option>
+            <option>POS</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Reference</label>
+          <input name="reference" class="form-control" placeholder="Bank ref / narration">
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Receipt (optional)</label>
+          <input type="file" name="receipt" class="form-control">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="card-footer d-flex justify-content-end">
+      <button class="btn btn-success">Save Payment</button>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <h4>Reports</h4>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <div class="card"><div class="card-body">
+        <div class="text-muted">Total Requests</div>
+        <div class="fs-3">{{ total_requests }}</div>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card"><div class="card-body">
+        <div class="text-muted">Total Paid</div>
+        <div class="fs-3">₦{{ "{:,.2f}".format(total_paid) }}</div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card"><div class="card-body">
+        <h6>Status Breakdown</h6>
+        <canvas id="statusChart"></canvas>
+      </div></div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card"><div class="card-body">
+        <h6>Payments (Last 6 Months)</h6>
+        <canvas id="payChart"></canvas>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const statusLabels = {{ status_labels|tojson }};
+  const statusValues = {{ status_values|tojson }};
+
+  new Chart(document.getElementById('statusChart'), {
+    type: 'pie',
+    data: {
+      labels: statusLabels,
+      datasets: [{ data: statusValues }]
+    }
+  });
+
+  const monthLabels = {{ month_labels|tojson }};
+  const monthValues = {{ month_values|tojson }};
+
+  new Chart(document.getElementById('payChart'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [{ label: 'Amount (₦)', data: monthValues }]
+    }
+  });
+</script>
+
+{% endblock %}

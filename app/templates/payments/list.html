@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+  <h4 class="fw-bold mb-3">Payments</h4>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Request</th>
+        <th>Amount</th>
+        <th>Method</th>
+        <th>Reference</th>
+        <th>By</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td>{{ p.procurement_request.title }}</td>
+        <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
+        <td>{{ p.method }}</td>
+        <td>{{ p.reference }}</td>
+        <td>{{ p.paid_by }}</td>
+        <td>{{ p.paid_at.strftime("%d %b %Y") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+
+    <!-- SIDEBAR -->
+    <aside class="col-md-2 sidebar">
+      <h6 class="text-uppercase mb-3">Queensmeal</h6>
+
+      <a href="{{ url_for('dashboard.home') }}">
+        <i class="bi bi-speedometer2"></i> Dashboard
+      </a>
+
+      <a href="{{ url_for('vendors.list_vendors') }}">
+        <i class="bi bi-truck"></i> Vendors
+      </a>
+
+      <a href="{{ url_for('procurement.list_requests') }}">
+        <i class="bi bi-cart"></i> Procurement
+      </a>
+
+      <a href="{{ url_for('reports.reports_home') }}">
+        <i class="bi bi-bar-chart"></i> Reports
+      </a>
+
+      <hr class="text-light">
+
+      <a href="{{ url_for('auth.logout') }}" class="text-danger">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="col-md-10 main">
+      <div class="topbar d-flex justify-content-between align-items-center">
+        <strong>{{ page_title or "Queensmeal System" }}</strong>
+      </div>
+
+      {% block page_content %}{% endblock %}
+    </main>
+
+  </div>
+</div>
+{% endblock %}
