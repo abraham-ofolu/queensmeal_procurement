@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash
 
 def create_app():
     app = Flask(__name__)
-
     app.config.from_object("app.config.Config")
 
     # Init extensions
@@ -30,9 +29,11 @@ def create_app():
     app.register_blueprint(users_bp, url_prefix="/users")
     app.register_blueprint(audit_bp, url_prefix="/audit")
 
-    # 🔑 AUTO-SEED DIRECTOR (RUNS ONCE)
+    # ✅ THIS IS THE IMPORTANT PART
     with app.app_context():
         from app.models.user import User
+
+        db.create_all()   # ← CREATES ALL TABLES ON RENDER
 
         if not User.query.filter_by(username="director").first():
             director = User(
