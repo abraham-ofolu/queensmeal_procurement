@@ -6,16 +6,22 @@ class Vendor(db.Model):
     __tablename__ = "vendors"
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    category = db.Column(db.String(80), nullable=True)
-    phone = db.Column(db.String(40), nullable=True)
-    email = db.Column(db.String(120), nullable=True)
-    address = db.Column(db.Text, nullable=True)
-    notes = db.Column(db.Text, nullable=True)
 
-    # Bank details (safe even if null)
-    bank_name = db.Column(db.String(120), nullable=True)
-    account_name = db.Column(db.String(120), nullable=True)
-    account_number = db.Column(db.String(30), nullable=True)
+    # REQUIRED
+    name = db.Column(db.String(255), nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    # OPTIONAL
+    category = db.Column(db.String(100))
+    phone = db.Column(db.String(50))
+    email = db.Column(db.String(255))
+    notes = db.Column(db.Text)
+
+    # BANK DETAILS
+    bank_name = db.Column(db.String(100))
+    account_name = db.Column(db.String(255))
+    account_number = db.Column(db.String(50))
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Vendor {self.name}>"
