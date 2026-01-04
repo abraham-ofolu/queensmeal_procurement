@@ -29,7 +29,6 @@ def create_vendor():
             category=request.form.get("category") or None,
             phone=request.form.get("phone") or None,
             email=request.form.get("email") or None,
-            notes=request.form.get("notes") or None,
             bank_name=request.form.get("bank_name") or None,
             account_name=request.form.get("account_name") or None,
             account_number=request.form.get("account_number") or None,
