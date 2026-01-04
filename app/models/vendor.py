@@ -10,6 +10,8 @@ class Vendor(db.Model):
     category = db.Column(db.String(80), nullable=True)
     phone = db.Column(db.String(40), nullable=True)
     email = db.Column(db.String(120), nullable=True)
+    address = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
 
     # Bank details (safe even if null)
     bank_name = db.Column(db.String(120), nullable=True)
