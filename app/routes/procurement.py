@@ -48,6 +48,16 @@ def create_request():
         amount = request.form.get("amount", "").strip()
         vendor_id = request.form.get("vendor_id") or None
         needed_by = request.form.get("needed_by") or None
+        quotation_file = request.files.get("quotation")
+        quotation_path = None
+
+        if quotation_file and quotation_file.filename:
+         filename = secure_filename(quotation_file.filename)
+         upload_dir = os.path.join(current_app.root_path, "static", "uploads", "quotations")
+         os.makedirs(upload_dir, exist_ok=True)
+         quotation_file.save(os.path.join(upload_dir, filename))
+         quotation_path = f"uploads/quotations/{filename}"
+
 
         if not title or not amount:
             flash("Title and Amount are required.", "danger")

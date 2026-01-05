@@ -45,6 +45,13 @@
     </a>
   {% endif %}
 
+  {% if pr.quotation %}
+  <a href="{{ url_for('static', filename=pr.quotation) }}" target="_blank">
+    View Uploaded Quotation
+  </a>
+{% endif %}
+
+
   <a href="{{ url_for('procurement.list_requests') }}"
      class="btn btn-secondary mt-3">
     Back
