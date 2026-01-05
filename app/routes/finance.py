@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash
-from flask_login import login_required, current_user
+import os
 from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_from_directory
+from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models.payment import Payment
@@ -13,36 +14,51 @@ finance_bp = Blueprint("finance", __name__, url_prefix="/finance")
 @login_required
 def list_payments():
     payments = Payment.query.order_by(Payment.created_at.desc()).all()
-    return render_template("finance/payments.html", payments=payments)
+    return render_template("finance/payments_list.html", payments=payments)
 
 
-@finance_bp.route("/payments/create/<int:request_id>", methods=["GET", "POST"])
+@finance_bp.route("/payments/create/<int:procurement_id>", methods=["GET", "POST"])
 @login_required
-def make_payment(request_id):
-    pr = ProcurementRequest.query.get_or_404(request_id)
+def make_payment(procurement_id):
+    pr = ProcurementRequest.query.get_or_404(procurement_id)
 
     if request.method == "POST":
-        try:
-            amount = float(request.form.get("amount"))
-            method = request.form.get("method")
+        amount = float(request.form.get("amount", 0))
+        method = request.form.get("method")
+        description = request.form.get("description")
 
-            payment = Payment(
-                procurement_request_id=pr.id,
-                amount=amount,
-                method=method,
-                paid_by=current_user.username,
-                paid_at=datetime.utcnow(),
-                created_at=datetime.utcnow(),
-            )
+        receipt_file = request.files.get("receipt")
+        receipt_filename = None
 
-            db.session.add(payment)
-            db.session.commit()
+        if receipt_file and receipt_file.filename:
+            upload_dir = os.path.join(current_app.root_path, "static/uploads/receipts")
+            os.makedirs(upload_dir, exist_ok=True)
 
-            flash("Payment recorded successfully", "success")
-            return redirect(url_for("finance.list_payments"))
+            timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+            receipt_filename = f"{timestamp}_{receipt_file.filename}"
+            receipt_file.save(os.path.join(upload_dir, receipt_filename))
 
-        except Exception as e:
-            db.session.rollback()
-            flash("Payment failed. Please check inputs.", "danger")
+        payment = Payment(
+            procurement_request_id=pr.id,
+            amount=amount,
+            method=method,
+            description=description,
+            receipt=receipt_filename,
+            paid_by=current_user.username,
+            paid_at=datetime.utcnow(),
+        )
 
-    return render_template("finance/create_payment.html", pr=pr)
+        db.session.add(payment)
+        db.session.commit()
+
+        flash("Payment recorded successfully.", "success")
+        return redirect(url_for("finance.list_payments"))
+
+    return render_template("finance/payment_create.html", procurement=pr)
+
+
+@finance_bp.route("/payments/receipt/<filename>")
+@login_required
+def view_receipt(filename):
+    upload_dir = os.path.join(current_app.root_path, "static/uploads/receipts")
+    return send_from_directory(upload_dir, filename)
