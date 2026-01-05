@@ -1,84 +1,53 @@
 {% extends "base.html" %}
-{% block content %}
 
+{% block content %}
 <div class="container mt-4">
 
-    <h4>Procurement Request Details</h4>
+    <h4>Procurement Request</h4>
 
     <div class="card mb-3">
         <div class="card-body">
             <p><strong>Title:</strong> {{ pr.title }}</p>
-            <p><strong>Description:</strong> {{ pr.description }}</p>
+            <p><strong>Description:</strong> {{ pr.description or "-" }}</p>
             <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
-            <p><strong>Status:</strong> {{ pr.status|capitalize }}</p>
-            <p><strong>Created At:</strong> {{ pr.created_at.strftime('%Y-%m-%d') }}</p>
-        </div>
-    </div>
-
-    <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
-            <p><strong>Outstanding:</strong>
-                ₦{{ "{:,.2f}".format(pr.amount - total_paid) }}
+            <p><strong>Status:</strong>
+                <span class="badge bg-secondary">{{ pr.status|capitalize }}</span>
             </p>
         </div>
     </div>
 
+    {% if pr.status == "pending" %}
+        <form method="POST"
+              action="{{ url_for('procurement.approve_request', procurement_id=pr.id) }}"
+              class="d-inline">
+            <button class="btn btn-success">Approve</button>
+        </form>
+
+        <form method="POST"
+              action="{{ url_for('procurement.reject_request', procurement_id=pr.id) }}"
+              class="d-inline">
+            <button class="btn btn-danger">Reject</button>
+        </form>
+    {% endif %}
+
     {% if pr.status == "approved" %}
-        <a
-            href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}"
-            class="btn btn-success"
-        >
+        <a class="btn btn-primary"
+           href="{{ url_for('finance.create_payment', procurement_id=pr.id) }}">
             Record Payment
         </a>
     {% endif %}
 
-    <a href="{{ url_for('procurement.list_requests') }}" class="btn btn-secondary">
-        Back
+    <a href="{{ url_for('procurement.list_requests') }}"
+       class="btn btn-outline-secondary">
+        Back to List
     </a>
 
-</div>
-
-{% endblock %}
-{% extends "base.html" %}
-{% block content %}
-
-<div class="container mt-4">
-
-    <h4>Procurement Request Details</h4>
-
-    <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Title:</strong> {{ pr.title }}</p>
-            <p><strong>Description:</strong> {{ pr.description }}</p>
-            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
-            <p><strong>Status:</strong> {{ pr.status|capitalize }}</p>
-            <p><strong>Created At:</strong> {{ pr.created_at.strftime('%Y-%m-%d') }}</p>
-        </div>
-    </div>
-
-    <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
-            <p><strong>Outstanding:</strong>
-                ₦{{ "{:,.2f}".format(pr.amount - total_paid) }}
-            </p>
-        </div>
-    </div>
-
-    {% if pr.status == "approved" %}
-        <a
-            href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}"
-            class="btn btn-success"
-        >
-            Record Payment
-        </a>
+    {% if total_paid is defined %}
+        <hr>
+        <p><strong>Total Paid:</strong>
+            ₦{{ "{:,.2f}".format(total_paid) }}
+        </p>
     {% endif %}
 
-    <a href="{{ url_for('procurement.list_requests') }}" class="btn btn-secondary">
-        Back
-    </a>
-
 </div>
-
 {% endblock %}
