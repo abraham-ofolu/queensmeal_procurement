@@ -3,59 +3,73 @@
 {% block content %}
 <div class="container mt-4">
 
-  <h3>Procurement Request</h3>
+    <h4>Procurement Request</h4>
 
-  <table class="table table-bordered">
-    <tr>
-      <th>Title</th>
-      <td>{{ pr.title }}</td>
-    </tr>
-    <tr>
-      <th>Amount</th>
-      <td>₦{{ "{:,.2f}".format(pr.amount) }}</td>
-    </tr>
-    <tr>
-      <th>Status</th>
-      <td>{{ pr.status|capitalize }}</td>
-    </tr>
-    <tr>
-      <th>Description</th>
-      <td>{{ pr.description }}</td>
-    </tr>
-    <tr>
-      <th>Quotation</th>
-      <td>
-        {% if pr.quotation_file %}
-          <a href="{{ url_for('static', filename='uploads/' ~ pr.quotation_file) }}"
-             target="_blank"
-             class="btn btn-sm btn-outline-primary">
-            View Quotation
-          </a>
-        {% else %}
-          <em>No quotation uploaded</em>
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Title:</strong> {{ pr.title }}</p>
+            <p><strong>Description:</strong> {{ pr.description }}</p>
+            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
+            <p><strong>Status:</strong>
+                <span class="badge bg-secondary">{{ pr.status }}</span>
+            </p>
+
+            {% if pr.quotation %}
+                <p>
+                    <strong>Quotation:</strong>
+                    <a href="{{ url_for('static', filename=pr.quotation) }}" target="_blank">
+                        View Quotation
+                    </a>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <a class="btn btn-outline-secondary"
+           href="{{ url_for('procurement.list_requests') }}">
+            Back
+        </a>
+
+        {% if pr.status == "approved" %}
+            <a class="btn btn-primary"
+               href="{{ url_for('finance.make_payment', request_id=pr.id) }}">
+                Record Payment
+            </a>
         {% endif %}
-      </td>
-    </tr>
-  </table>
+    </div>
 
-  {% if pr.status == "approved" %}
-    <a class="btn btn-primary"
-       href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}">
-      Record Payment
-    </a>
-  {% endif %}
-
-  {% if pr.quotation %}
-  <a href="{{ url_for('static', filename=pr.quotation) }}" target="_blank">
-    View Uploaded Quotation
-  </a>
-{% endif %}
-
-
-  <a href="{{ url_for('procurement.list_requests') }}"
-     class="btn btn-secondary mt-3">
-    Back
-  </a>
+    {% if payments %}
+        <h5>Payments</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.paid_at.strftime("%d %b %Y") }}</td>
+                    <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
+                    <td>{{ p.method }}</td>
+                    <td>
+                        {% if p.receipt %}
+                            <a href="{{ url_for('static', filename=p.receipt) }}" target="_blank">
+                                View
+                            </a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 
 </div>
 {% endblock %}
