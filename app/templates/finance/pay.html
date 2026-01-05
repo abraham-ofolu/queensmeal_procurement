@@ -1,35 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h3>Make Payment</h3>
+<div class="container mt-4">
+    <h4>Record Payment</h4>
 
-<div class="card mb-3">
-  <div class="card-body">
-    <p><strong>Request:</strong> {{ pr.title }}</p>
-    <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
-    <p><strong>Status:</strong> {{ pr.status|capitalize }}</p>
-  </div>
+    <form method="POST" enctype="multipart/form-data">
+
+        <div class="mb-3">
+            <label class="form-label">Amount</label>
+            <input type="number" step="0.01" class="form-control" name="amount" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Payment Method</label>
+            <select class="form-select" name="method" required>
+                <option value="Transfer">Transfer</option>
+                <option value="Cash">Cash</option>
+                <option value="Cheque">Cheque</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Receipt (optional)</label>
+            <input type="file" class="form-control" name="receipt">
+        </div>
+
+        <button class="btn btn-success">Save Payment</button>
+
+        <a href="{{ url_for('procurement.view_request', procurement_id=pr.id) }}"
+           class="btn btn-secondary">
+            Cancel
+        </a>
+
+    </form>
 </div>
-
-<form method="POST">
-  <div class="mb-3">
-    <label class="form-label">Payment Description</label>
-    <input
-      type="text"
-      name="description"
-      class="form-control"
-      required
-    >
-  </div>
-
-  <button class="btn btn-success">
-    Confirm Payment
-  </button>
-
-  <a href="{{ url_for('procurement.view_request', request_id=pr.id) }}"
-     class="btn btn-secondary ms-2">
-    Cancel
-  </a>
-</form>
 
 {% endblock %}

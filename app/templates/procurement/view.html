@@ -40,3 +40,45 @@
 </div>
 
 {% endblock %}
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+    <h4>Procurement Request Details</h4>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Title:</strong> {{ pr.title }}</p>
+            <p><strong>Description:</strong> {{ pr.description }}</p>
+            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
+            <p><strong>Status:</strong> {{ pr.status|capitalize }}</p>
+            <p><strong>Created At:</strong> {{ pr.created_at.strftime('%Y-%m-%d') }}</p>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
+            <p><strong>Outstanding:</strong>
+                ₦{{ "{:,.2f}".format(pr.amount - total_paid) }}
+            </p>
+        </div>
+    </div>
+
+    {% if pr.status == "approved" %}
+        <a
+            href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}"
+            class="btn btn-success"
+        >
+            Record Payment
+        </a>
+    {% endif %}
+
+    <a href="{{ url_for('procurement.list_requests') }}" class="btn btn-secondary">
+        Back
+    </a>
+
+</div>
+
+{% endblock %}
