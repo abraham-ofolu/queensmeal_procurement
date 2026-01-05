@@ -1,62 +1,44 @@
 {% extends "base.html" %}
+
 {% block content %}
+<div class="container mt-4">
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3 class="fw-bold mb-0">Payments</h3>
-  {% if current_user.role == "director" %}
-    <a class="btn btn-primary" href="{{ url_for('finance.create_payment') }}">New Payment</a>
-  {% endif %}
-</div>
+    <h4>Payments</h4>
 
-<div class="card shadow-sm">
-  <div class="card-body">
+    <p class="text-muted">
+        Payments are recorded from approved procurement requests.
+    </p>
 
-    {% if payments|length == 0 %}
-      <div class="text-muted">No payments recorded yet.</div>
-    {% else %}
-      <div class="table-responsive">
-        <table class="table table-sm table-striped align-middle">
-          <thead>
+    <table class="table table-bordered table-sm">
+        <thead>
             <tr>
-              <th>ID</th>
-              <th>Procurement</th>
-              <th>Description</th>
-              <th class="text-end">Amount</th>
-              <th>Paid By</th>
-              <th>Date</th>
+                <th>ID</th>
+                <th>Procurement</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Paid By</th>
+                <th>Date</th>
             </tr>
-          </thead>
-          <tbody>
-          {% for p in payments %}
+        </thead>
+        <tbody>
+        {% for p in payments %}
             <tr>
-              <td>{{ p.id }}</td>
-              <td>
-                {% if p.procurement_request_id and reqs.get(p.procurement_request_id) %}
-                  #{{ p.procurement_request_id }} — {{ reqs[p.procurement_request_id].title }}
-                {% elif p.procurement_request_id %}
-                  #{{ p.procurement_request_id }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td>{{ p.description }}</td>
-              <td class="text-end">₦{{ "%.2f"|format(p.amount) }}</td>
-              <td>{{ p.paid_by or "-" }}</td>
-              <td>
-                {% if p.paid_at %}
-                  {{ p.paid_at.strftime("%Y-%m-%d %H:%M") }}
-                {% else %}
-                  {{ p.created_at.strftime("%Y-%m-%d %H:%M") }}
-                {% endif %}
-              </td>
+                <td>{{ p.id }}</td>
+                <td>#{{ p.procurement_request_id }}</td>
+                <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
+                <td>{{ p.method }}</td>
+                <td>{{ p.paid_by }}</td>
+                <td>{{ p.created_at.strftime("%Y-%m-%d") }}</td>
             </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% endif %}
+        {% else %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    No payments recorded
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 
-  </div>
 </div>
-
 {% endblock %}

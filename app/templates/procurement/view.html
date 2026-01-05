@@ -20,31 +20,32 @@
         <form method="POST"
               action="{{ url_for('procurement.approve_request', procurement_id=pr.id) }}"
               class="d-inline">
-            <button class="btn btn-success">Approve</button>
+            <button class="btn btn-success btn-sm">Approve</button>
         </form>
 
         <form method="POST"
               action="{{ url_for('procurement.reject_request', procurement_id=pr.id) }}"
               class="d-inline">
-            <button class="btn btn-danger">Reject</button>
+            <button class="btn btn-danger btn-sm">Reject</button>
         </form>
     {% endif %}
 
     {% if pr.status == "approved" %}
-        <a class="btn btn-primary"
-           href="{{ url_for('finance.create_payment', procurement_id=pr.id) }}">
+        <a class="btn btn-primary btn-sm"
+           href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}">
             Record Payment
         </a>
     {% endif %}
 
     <a href="{{ url_for('procurement.list_requests') }}"
-       class="btn btn-outline-secondary">
+       class="btn btn-outline-secondary btn-sm">
         Back to List
     </a>
 
     {% if total_paid is defined %}
         <hr>
-        <p><strong>Total Paid:</strong>
+        <p>
+            <strong>Total Paid:</strong>
             ₦{{ "{:,.2f}".format(total_paid) }}
         </p>
     {% endif %}
