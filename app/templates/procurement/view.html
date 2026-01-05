@@ -16,36 +16,29 @@
     </tr>
     <tr>
       <th>Status</th>
-      <td>
-        <span class="badge bg-secondary">{{ pr.status|capitalize }}</span>
-      </td>
+      <td>{{ pr.status|capitalize }}</td>
     </tr>
     <tr>
       <th>Description</th>
       <td>{{ pr.description }}</td>
     </tr>
+    <tr>
+      <th>Quotation</th>
+      <td>
+        {% if pr.quotation_file %}
+          <a href="{{ url_for('static', filename='uploads/' ~ pr.quotation_file) }}"
+             target="_blank"
+             class="btn btn-sm btn-outline-primary">
+            View Quotation
+          </a>
+        {% else %}
+          <em>No quotation uploaded</em>
+        {% endif %}
+      </td>
+    </tr>
   </table>
 
-  {% if pr.status == "pending" and current_user.role == "director" %}
-    <form method="POST"
-          action="{{ url_for('procurement.approve_request', request_id=pr.id) }}"
-          style="display:inline;">
-      <button class="btn btn-success">Approve</button>
-    </form>
-
-    <form method="POST"
-          action="{{ url_for('procurement.reject_request', request_id=pr.id) }}"
-          style="display:inline;">
-      <button class="btn btn-danger">Reject</button>
-    </form>
-  {% endif %}
-
   {% if pr.status == "approved" %}
-    <hr>
-    <h5>Payments</h5>
-
-    <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
-
     <a class="btn btn-primary"
        href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}">
       Record Payment
@@ -53,7 +46,7 @@
   {% endif %}
 
   <a href="{{ url_for('procurement.list_requests') }}"
-     class="btn btn-outline-secondary mt-3">
+     class="btn btn-secondary mt-3">
     Back
   </a>
 
