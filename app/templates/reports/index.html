@@ -2,63 +2,76 @@
 {% block content %}
 
 <div class="container mt-4">
-  <h4>Reports</h4>
+    <h4>Reports Dashboard</h4>
 
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <div class="card"><div class="card-body">
-        <div class="text-muted">Total Requests</div>
-        <div class="fs-3">{{ total_requests }}</div>
-      </div></div>
-    </div>
-    <div class="col-md-6">
-      <div class="card"><div class="card-body">
-        <div class="text-muted">Total Paid</div>
-        <div class="fs-3">₦{{ "{:,.2f}".format(total_paid) }}</div>
-      </div></div>
-    </div>
-  </div>
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>Total Requests</h6>
+                    <h4>{{ total_requests }}</h4>
+                </div>
+            </div>
+        </div>
 
-  <div class="row g-3">
-    <div class="col-md-6">
-      <div class="card"><div class="card-body">
-        <h6>Status Breakdown</h6>
-        <canvas id="statusChart"></canvas>
-      </div></div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>Total Requested</h6>
+                    <h4>₦{{ "{:,.2f}".format(total_requested_amount) }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>Total Paid</h6>
+                    <h4>₦{{ "{:,.2f}".format(total_paid) }}</h4>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="card"><div class="card-body">
-        <h6>Payments (Last 6 Months)</h6>
-        <canvas id="payChart"></canvas>
-      </div></div>
+    <div class="row">
+        <div class="col-md-6">
+            <canvas id="statusChart"></canvas>
+        </div>
     </div>
-  </div>
 </div>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  const statusLabels = {{ status_labels|tojson }};
-  const statusValues = {{ status_values|tojson }};
 
-  new Chart(document.getElementById('statusChart'), {
+<script>
+const ctx = document.getElementById('statusChart').getContext('2d');
+
+new Chart(ctx, {
     type: 'pie',
     data: {
-      labels: statusLabels,
-      datasets: [{ data: statusValues }]
+        labels: ['Approved', 'Pending', 'Rejected'],
+        datasets: [{
+            data: [
+                {{ approved_count }},
+                {{ pending_count }},
+                {{ rejected_count }}
+            ],
+            backgroundColor: [
+                '#28a745',
+                '#ffc107',
+                '#dc3545'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
     }
-  });
-
-  const monthLabels = {{ month_labels|tojson }};
-  const monthValues = {{ month_values|tojson }};
-
-  new Chart(document.getElementById('payChart'), {
-    type: 'bar',
-    data: {
-      labels: monthLabels,
-      datasets: [{ label: 'Amount (₦)', data: monthValues }]
-    }
-  });
+});
 </script>
 
 {% endblock %}
