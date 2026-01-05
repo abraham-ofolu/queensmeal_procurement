@@ -3,52 +3,59 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h4>Procurement Request</h4>
+  <h3>Procurement Request</h3>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Title:</strong> {{ pr.title }}</p>
-            <p><strong>Description:</strong> {{ pr.description or "-" }}</p>
-            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
-            <p><strong>Status:</strong>
-                <span class="badge bg-secondary">{{ pr.status|capitalize }}</span>
-            </p>
-        </div>
-    </div>
+  <table class="table table-bordered">
+    <tr>
+      <th>Title</th>
+      <td>{{ pr.title }}</td>
+    </tr>
+    <tr>
+      <th>Amount</th>
+      <td>₦{{ "{:,.2f}".format(pr.amount) }}</td>
+    </tr>
+    <tr>
+      <th>Status</th>
+      <td>
+        <span class="badge bg-secondary">{{ pr.status|capitalize }}</span>
+      </td>
+    </tr>
+    <tr>
+      <th>Description</th>
+      <td>{{ pr.description }}</td>
+    </tr>
+  </table>
 
-    {% if pr.status == "pending" %}
-        <form method="POST"
-              action="{{ url_for('procurement.approve_request', procurement_id=pr.id) }}"
-              class="d-inline">
-            <button class="btn btn-success btn-sm">Approve</button>
-        </form>
+  {% if pr.status == "pending" and current_user.role == "director" %}
+    <form method="POST"
+          action="{{ url_for('procurement.approve_request', request_id=pr.id) }}"
+          style="display:inline;">
+      <button class="btn btn-success">Approve</button>
+    </form>
 
-        <form method="POST"
-              action="{{ url_for('procurement.reject_request', procurement_id=pr.id) }}"
-              class="d-inline">
-            <button class="btn btn-danger btn-sm">Reject</button>
-        </form>
-    {% endif %}
+    <form method="POST"
+          action="{{ url_for('procurement.reject_request', request_id=pr.id) }}"
+          style="display:inline;">
+      <button class="btn btn-danger">Reject</button>
+    </form>
+  {% endif %}
 
-    {% if pr.status == "approved" %}
-        <a class="btn btn-primary btn-sm"
-           href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}">
-            Record Payment
-        </a>
-    {% endif %}
+  {% if pr.status == "approved" %}
+    <hr>
+    <h5>Payments</h5>
 
-    <a href="{{ url_for('procurement.list_requests') }}"
-       class="btn btn-outline-secondary btn-sm">
-        Back to List
+    <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
+
+    <a class="btn btn-primary"
+       href="{{ url_for('finance.make_payment', procurement_id=pr.id) }}">
+      Record Payment
     </a>
+  {% endif %}
 
-    {% if total_paid is defined %}
-        <hr>
-        <p>
-            <strong>Total Paid:</strong>
-            ₦{{ "{:,.2f}".format(total_paid) }}
-        </p>
-    {% endif %}
+  <a href="{{ url_for('procurement.list_requests') }}"
+     class="btn btn-outline-secondary mt-3">
+    Back
+  </a>
 
 </div>
 {% endblock %}
