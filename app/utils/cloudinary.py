@@ -1,7 +1,6 @@
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-import os
 
 
 def init_cloudinary(app):
@@ -22,14 +21,12 @@ def upload_file(file, folder):
         folder=folder,
         resource_type="auto"
     )
-
     return result.get("secure_url")
 
 
 def delete_file(file_url):
     if not file_url:
         return
-
     try:
         public_id = file_url.split("/")[-1].split(".")[0]
         cloudinary.uploader.destroy(public_id, resource_type="auto")

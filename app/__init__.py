@@ -31,6 +31,7 @@ def create_app():
     from app.routes.finance import finance_bp
     from app.routes.reports import reports_bp
     from app.routes.audit import audit_bp
+    from app.utils.cloudinary import init_cloudinary
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(procurement_bp)
@@ -38,5 +39,6 @@ def create_app():
     app.register_blueprint(finance_bp)
     app.register_blueprint(reports_bp)
     app.register_blueprint(audit_bp)
+    
 
     return app
