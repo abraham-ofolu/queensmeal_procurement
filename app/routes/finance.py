@@ -1,17 +1,9 @@
-import os
-import uuid
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask_login import login_required, current_user
 from datetime import datetime
-
-from flask import (
-    Blueprint, render_template, request, redirect,
-    url_for, flash, current_app, send_from_directory
-)
-from flask_login import login_required
-from werkzeug.utils import secure_filename
-
-from app.extensions import db
-from app.models.payment import Payment
-from app.models.procurement_request import ProcurementRequest
+from app import db
+from app.models import Payment, ProcurementRequest, AuditLog
+from app.utils.cloudinary import upload_file, delete_file
 
 finance_bp = Blueprint("finance", __name__, url_prefix="/finance")
 
@@ -26,11 +18,15 @@ def list_payments():
 @finance_bp.route("/payments/create/<int:request_id>", methods=["GET", "POST"])
 @login_required
 def make_payment(request_id):
+    if current_user.role not in ["finance", "director"]:
+        abort(403)
+
     pr = ProcurementRequest.query.get_or_404(request_id)
 
     if request.method == "POST":
-        amount = float(request.form.get("amount"))
+        amount = request.form.get("amount")
         method = request.form.get("method")
+        receipt = request.files.get("receipt")
 
         payment = Payment(
             procurement_request_id=pr.id,
@@ -39,88 +35,73 @@ def make_payment(request_id):
             paid_at=datetime.utcnow()
         )
 
+        if receipt:
+            payment.receipt = upload_file(receipt, folder="receipts")
+
         db.session.add(payment)
+        db.session.add(AuditLog(
+            user_id=current_user.id,
+            action="CREATE_PAYMENT",
+            entity="Payment",
+            entity_id=payment.id
+        ))
         db.session.commit()
 
-        flash("Payment recorded. Upload receipt below.", "success")
-        return redirect(
-            url_for("finance.upload_receipt", payment_id=payment.id)
-        )
+        flash("Payment recorded", "success")
+        return redirect(url_for("procurement.view_request", request_id=pr.id))
 
     return render_template("finance/pay.html", pr=pr)
 
 
-# =========================
-# RECEIPT UPLOAD
-# =========================
-@finance_bp.route("/payments/<int:payment_id>/upload-receipt", methods=["GET", "POST"])
+@finance_bp.route("/payments/upload-receipt/<int:payment_id>", methods=["POST"])
 @login_required
 def upload_receipt(payment_id):
+    if current_user.role != "finance":
+        abort(403)
+
     payment = Payment.query.get_or_404(payment_id)
+    file = request.files.get("receipt")
 
-    if request.method == "POST":
-        file = request.files.get("receipt")
-        if not file or file.filename == "":
-            flash("No file selected", "danger")
-            return redirect(request.url)
+    if not file:
+        flash("No file selected", "danger")
+        return redirect(url_for("procurement.view_request", request_id=payment.procurement_request_id))
 
-        filename = secure_filename(file.filename)
-        unique_name = f"RCPT_{uuid.uuid4()}_{filename}"
+    if payment.receipt:
+        delete_file(payment.receipt)
 
-        upload_dir = os.path.join(
-            current_app.root_path, "static", "uploads", "receipts"
-        )
-        os.makedirs(upload_dir, exist_ok=True)
+    payment.receipt = upload_file(file, folder="receipts")
 
-        file.save(os.path.join(upload_dir, unique_name))
-        payment.receipt = unique_name
-        db.session.commit()
+    db.session.add(AuditLog(
+        user_id=current_user.id,
+        action="UPLOAD_RECEIPT",
+        entity="Payment",
+        entity_id=payment.id
+    ))
+    db.session.commit()
 
-        flash("Receipt uploaded", "success")
-        return redirect(
-            url_for("procurement.view_request",
-                    request_id=payment.procurement_request_id)
-        )
-
-    return render_template("finance/upload_receipt.html", payment=payment)
+    flash("Receipt uploaded", "success")
+    return redirect(url_for("procurement.view_request", request_id=payment.procurement_request_id))
 
 
-# =========================
-# VIEW RECEIPT
-# =========================
-@finance_bp.route("/receipt/<path:filename>")
-@login_required
-def view_receipt(filename):
-    upload_dir = os.path.join(
-        current_app.root_path, "static", "uploads", "receipts"
-    )
-    return send_from_directory(upload_dir, filename)
-
-
-# =========================
-# DELETE RECEIPT
-# =========================
-@finance_bp.route("/payments/<int:payment_id>/delete-receipt", methods=["POST"])
+@finance_bp.route("/payments/delete-receipt/<int:payment_id>", methods=["POST"])
 @login_required
 def delete_receipt(payment_id):
+    if current_user.role != "finance":
+        abort(403)
+
     payment = Payment.query.get_or_404(payment_id)
 
     if payment.receipt:
-        path = os.path.join(
-            current_app.root_path,
-            "static",
-            "uploads",
-            "receipts",
-            payment.receipt
-        )
-        if os.path.exists(path):
-            os.remove(path)
-
+        delete_file(payment.receipt)
         payment.receipt = None
-        db.session.commit()
-        flash("Receipt deleted", "success")
 
-    return redirect(
-        url_for("procurement.view_request",
-                request_id=payment.procurement_request_id)
-    )
+        db.session.add(AuditLog(
+            user_id=current_user.id,
+            action="DELETE_RECEIPT",
+            entity="Payment",
+            entity_id=payment.id
+        ))
+        db.session.commit()
+
+    flash("Receipt deleted", "success")
+    return redirect(url_for("procurement.view_request", request_id=payment.procurement_request_id))
