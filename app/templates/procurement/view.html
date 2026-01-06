@@ -25,7 +25,7 @@
             <th>Quotation</th>
             <td>
                 {% if pr.quotation %}
-                    <a href="{{ url_for('procurement.view_quotation', filename=pr.quotation) }}"
+                    <a href="{{ url_for('static', filename='uploads/quotations/' ~ pr.quotation) }}"
                        target="_blank"
                        class="btn btn-sm btn-outline-primary">
                         View Quotation
@@ -59,8 +59,10 @@
                     <td>{{ p.method }}</td>
                     <td>
                         {% if p.receipt %}
-                            <a href="{{ url_for('finance.view_receipt', filename=p.receipt) }}"
-                               target="_blank">View</a>
+                            <a href="{{ url_for('static', filename='uploads/receipts/' ~ p.receipt) }}"
+                               target="_blank">
+                               View
+                            </a>
                         {% else %}
                             —
                         {% endif %}

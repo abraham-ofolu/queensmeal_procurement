@@ -1,9 +1,6 @@
 import os
 from datetime import datetime
-from flask import (
-    Blueprint, render_template, request,
-    redirect, url_for, flash, current_app, send_from_directory
-)
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -77,12 +74,3 @@ def view_request(request_id):
         payments=payments,
         total_paid=total_paid
     )
-
-
-@procurement_bp.route("/quotation/<path:filename>")
-@login_required
-def view_quotation(filename):
-    upload_dir = os.path.join(
-        current_app.root_path, "static", "uploads", "quotations"
-    )
-    return send_from_directory(upload_dir, filename)

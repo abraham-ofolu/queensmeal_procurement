@@ -1,9 +1,6 @@
 import os
 from datetime import datetime
-from flask import (
-    Blueprint, render_template, request,
-    redirect, url_for, flash, current_app, send_from_directory
-)
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -55,12 +52,3 @@ def make_payment(request_id):
         return redirect(url_for("procurement.view_request", request_id=pr.id))
 
     return render_template("finance/pay.html", pr=pr)
-
-
-@finance_bp.route("/receipt/<path:filename>")
-@login_required
-def view_receipt(filename):
-    upload_dir = os.path.join(
-        current_app.root_path, "static", "uploads", "receipts"
-    )
-    return send_from_directory(upload_dir, filename)
