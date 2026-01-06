@@ -3,74 +3,105 @@
 {% block content %}
 <div class="container mt-4">
 
-    <h4>Procurement Request</h4>
+    <h3>Procurement Request Details</h3>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <p><strong>Title:</strong> {{ pr.title }}</p>
-            <p><strong>Description:</strong> {{ pr.description }}</p>
-            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
-            <p><strong>Status:</strong>
-                <span class="badge bg-secondary">{{ pr.status }}</span>
-            </p>
-
-            {% if pr.quotation %}
-                <p>
-                    <strong>Quotation:</strong>
-                    <a href="{{ url_for('procurement.view_upload', filename=pr.quotation) }}" target="_blank">
-
+    <table class="table table-bordered">
+        <tr>
+            <th>Title</th>
+            <td>{{ pr.title }}</td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td>{{ pr.description }}</td>
+        </tr>
+        <tr>
+            <th>Amount</th>
+            <td>₦{{ "{:,.2f}".format(pr.amount) }}</td>
+        </tr>
+        <tr>
+            <th>Status</th>
+            <td>
+                <span class="badge bg-secondary text-uppercase">
+                    {{ pr.status }}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <th>Vendor</th>
+            <td>{{ pr.vendor.name if pr.vendor else "—" }}</td>
+        </tr>
+        <tr>
+            <th>Created By</th>
+            <td>{{ pr.created_by }}</td>
+        </tr>
+        <tr>
+            <th>Created At</th>
+            <td>{{ pr.created_at.strftime("%d %b %Y %H:%M") }}</td>
+        </tr>
+        <tr>
+            <th>Quotation</th>
+            <td>
+                {% if pr.quotation %}
+                    <a
+                        href="{{ url_for('procurement.view_quotation', filename=pr.quotation) }}"
+                        target="_blank"
+                        class="btn btn-sm btn-outline-primary"
+                    >
                         View Quotation
                     </a>
-                </p>
-            {% endif %}
-        </div>
-    </div>
+                {% else %}
+                    <span class="text-muted">No quotation uploaded</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
 
-    <div class="mb-3">
-        <a class="btn btn-outline-secondary"
-           href="{{ url_for('procurement.list_requests') }}">
-            Back
-        </a>
+    <hr>
 
-        {% if pr.status == "approved" %}
-            <a class="btn btn-primary"
-               href="{{ url_for('finance.make_payment', request_id=pr.id) }}">
-                Record Payment
-            </a>
-        {% endif %}
-    </div>
+    <h5>Payments</h5>
 
     {% if payments %}
-        <h5>Payments</h5>
-        <table class="table table-sm">
+        <table class="table table-striped">
             <thead>
                 <tr>
                     <th>Date</th>
                     <th>Amount</th>
                     <th>Method</th>
-                    <th>Receipt</th>
+                    <th>Paid By</th>
                 </tr>
             </thead>
             <tbody>
                 {% for p in payments %}
                 <tr>
-                    <td>{{ p.paid_at.strftime("%d %b %Y") }}</td>
+                    <td>{{ p.paid_at.strftime("%d %b %Y %H:%M") }}</td>
                     <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
                     <td>{{ p.method }}</td>
-                    <td>
-                        {% if p.receipt %}
-                            <a href="{{ url_for('static', filename=p.receipt) }}" target="_blank">
-                                View
-                            </a>
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
+                    <td>{{ p.paid_by }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
+        <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
+    {% else %}
+        <p class="text-muted">No payments recorded.</p>
     {% endif %}
+
+    <hr>
+
+    <a
+        href="{{ url_for('finance.make_payment', request_id=pr.id) }}"
+        class="btn btn-success"
+    >
+        Record Payment
+    </a>
+
+    <a
+        href="{{ url_for('procurement.list_requests') }}"
+        class="btn btn-secondary"
+    >
+        Back
+    </a>
 
 </div>
 {% endblock %}
