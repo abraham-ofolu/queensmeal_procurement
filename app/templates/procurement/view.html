@@ -6,51 +6,32 @@
     <h3>Procurement Request Details</h3>
 
     <table class="table table-bordered">
-        <tr>
-            <th>Title</th>
-            <td>{{ pr.title }}</td>
-        </tr>
-        <tr>
-            <th>Description</th>
-            <td>{{ pr.description }}</td>
-        </tr>
-        <tr>
-            <th>Amount</th>
-            <td>₦{{ "{:,.2f}".format(pr.amount) }}</td>
-        </tr>
-        <tr>
-            <th>Status</th>
-            <td>
-                <span class="badge bg-secondary text-uppercase">
-                    {{ pr.status }}
-                </span>
-            </td>
-        </tr>
+        <tr><th>Title</th><td>{{ pr.title }}</td></tr>
+        <tr><th>Description</th><td>{{ pr.description }}</td></tr>
+        <tr><th>Amount</th><td>₦{{ "{:,.2f}".format(pr.amount) }}</td></tr>
+        <tr><th>Status</th><td>{{ pr.status|upper }}</td></tr>
+
         <tr>
             <th>Vendor</th>
-            <td>{{ pr.vendor.name if pr.vendor else "—" }}</td>
+            <td>
+                <strong>{{ pr.vendor.name }}</strong><br>
+                Bank: {{ pr.vendor.bank_name }}<br>
+                Account Name: {{ pr.vendor.account_name }}<br>
+                Account Number: {{ pr.vendor.account_number }}
+            </td>
         </tr>
-        <tr>
-            <th>Created By</th>
-            <td>{{ pr.created_by }}</td>
-        </tr>
-        <tr>
-            <th>Created At</th>
-            <td>{{ pr.created_at.strftime("%d %b %Y %H:%M") }}</td>
-        </tr>
+
         <tr>
             <th>Quotation</th>
             <td>
                 {% if pr.quotation %}
-                    <a
-                        href="{{ url_for('procurement.view_quotation', filename=pr.quotation) }}"
-                        target="_blank"
-                        class="btn btn-sm btn-outline-primary"
-                    >
+                    <a href="{{ url_for('procurement.view_quotation', filename=pr.quotation) }}"
+                       target="_blank"
+                       class="btn btn-sm btn-outline-primary">
                         View Quotation
                     </a>
                 {% else %}
-                    <span class="text-muted">No quotation uploaded</span>
+                    <span class="text-muted">None</span>
                 {% endif %}
             </td>
         </tr>
@@ -67,39 +48,42 @@
                     <th>Date</th>
                     <th>Amount</th>
                     <th>Method</th>
-                    <th>Paid By</th>
+                    <th>Receipt</th>
                 </tr>
             </thead>
             <tbody>
                 {% for p in payments %}
                 <tr>
-                    <td>{{ p.paid_at.strftime("%d %b %Y %H:%M") }}</td>
+                    <td>{{ p.paid_at.strftime("%d %b %Y") }}</td>
                     <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
                     <td>{{ p.method }}</td>
-                    <td>{{ p.paid_by }}</td>
+                    <td>
+                        {% if p.receipt %}
+                            <a href="{{ url_for('finance.view_receipt', filename=p.receipt) }}"
+                               target="_blank">View</a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <p><strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}</p>
+        <strong>Total Paid:</strong> ₦{{ "{:,.2f}".format(total_paid) }}
     {% else %}
-        <p class="text-muted">No payments recorded.</p>
+        <p>No payments yet.</p>
     {% endif %}
 
     <hr>
 
-    <a
-        href="{{ url_for('finance.make_payment', request_id=pr.id) }}"
-        class="btn btn-success"
-    >
+    <a href="{{ url_for('finance.make_payment', request_id=pr.id) }}"
+       class="btn btn-success">
         Record Payment
     </a>
 
-    <a
-        href="{{ url_for('procurement.list_requests') }}"
-        class="btn btn-secondary"
-    >
+    <a href="{{ url_for('procurement.list_requests') }}"
+       class="btn btn-secondary">
         Back
     </a>
 
