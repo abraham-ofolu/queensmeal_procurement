@@ -17,7 +17,8 @@
             {% if pr.quotation %}
                 <p>
                     <strong>Quotation:</strong>
-                    <a href="{{ url_for('static', filename=pr.quotation) }}" target="_blank">
+                    <a href="{{ url_for('procurement.view_upload', filename=pr.quotation) }}" target="_blank">
+
                         View Quotation
                     </a>
                 </p>
