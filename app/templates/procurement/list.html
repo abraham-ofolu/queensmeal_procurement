@@ -2,16 +2,14 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Procurement Requests</h3>
-
-    <!-- FIXED: correct endpoint -->
-    <a class="btn btn-primary" href="{{ url_for('procurement.create') }}">
+    <h2>Procurement Requests</h2>
+    <a class="btn btn-primary" href="{{ url_for('procurement.create_request') }}">
         New Request
     </a>
 </div>
 
-<table class="table table-bordered table-hover">
-    <thead class="table-light">
+<table class="table table-bordered table-striped">
+    <thead>
         <tr>
             <th>ID</th>
             <th>Item</th>
@@ -22,29 +20,20 @@
             <th>Action</th>
         </tr>
     </thead>
-
     <tbody>
-        {% for pr in requests %}
+        {% for r in requests %}
         <tr>
-            <td>{{ pr.id }}</td>
-            <td>{{ pr.item_name }}</td>
-            <td>{{ pr.vendor.name if pr.vendor else "-" }}</td>
-            <td>₦{{ "{:,.2f}".format(pr.amount) }}</td>
-            <td>
-                <span class="badge bg-secondary">{{ pr.status }}</span>
-            </td>
-            <td>{{ pr.created_at.strftime("%Y-%m-%d") }}</td>
+            <td>{{ r.id }}</td>
+            <td>{{ r.item_name }}</td>
+            <td>{{ r.vendor.name if r.vendor else "—" }}</td>
+            <td>₦{{ "{:,.2f}".format(r.amount) }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.created_at.strftime("%Y-%m-%d") }}</td>
             <td>
                 <a class="btn btn-sm btn-outline-primary"
-                   href="{{ url_for('procurement.view_request', request_id=pr.id) }}">
+                   href="{{ url_for('procurement.view_request', request_id=r.id) }}">
                     View
                 </a>
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="7" class="text-center text-muted">
-                No procurement requests yet.
             </td>
         </tr>
         {% endfor %}
