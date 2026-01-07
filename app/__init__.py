@@ -2,6 +2,7 @@ from flask import Flask
 from flask_login import LoginManager
 
 from app.extensions import db
+from app.models import User
 from app.utils.cloudinary import init_cloudinary
 
 # Blueprints
@@ -14,6 +15,11 @@ from app.routes.reports import reports_bp
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 def create_app():
@@ -31,12 +37,12 @@ def create_app():
     login_manager.init_app(app)
 
     # =========================
-    # CLOUDINARY (FILES)
+    # CLOUDINARY
     # =========================
     init_cloudinary(app)
 
     # =========================
-    # BLUEPRINTS (ORDER MATTERS)
+    # BLUEPRINTS
     # =========================
     app.register_blueprint(auth_bp)
     app.register_blueprint(procurement_bp, url_prefix="/procurement")
