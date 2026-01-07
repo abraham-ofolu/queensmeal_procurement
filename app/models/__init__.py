@@ -1,6 +1,13 @@
 from .user import User
+from .vendor import Vendor
 from .procurement_request import ProcurementRequest
 from .payment import Payment
-from .vendor import Vendor
+from .audit_log import AuditLog
 
-__all__ = ["User", "ProcurementRequest", "Payment", "Vendor"]
+__all__ = [
+    "User",
+    "Vendor",
+    "ProcurementRequest",
+    "Payment",
+    "AuditLog",
+]
