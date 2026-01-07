@@ -64,6 +64,8 @@ def create_app():
     from app.routes.reports import reports_bp
     from app.routes.audit import audit_bp
     from app.routes.users import users_bp
+    from app.routes.main import main_bp
+
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(procurement_bp, url_prefix="/procurement")
@@ -72,5 +74,6 @@ def create_app():
     app.register_blueprint(reports_bp, url_prefix="/reports")
     app.register_blueprint(audit_bp, url_prefix="/audit")
     app.register_blueprint(users_bp, url_prefix="/users")
+    app.register_blueprint(main_bp)
 
     return app
