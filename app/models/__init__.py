@@ -2,3 +2,4 @@ from app.models.user import User
 from app.models.vendor import Vendor
 from app.models.procurement import ProcurementRequest
 from app.models.payment import Payment
+from app.models.audit_log import AuditLog
