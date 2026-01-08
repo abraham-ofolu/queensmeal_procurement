@@ -7,17 +7,15 @@
     <tr>
         <th>ID</th>
         <th>Amount</th>
-        <th>Date</th>
     </tr>
     {% for p in payments %}
     <tr>
         <td>{{ p.id }}</td>
         <td>{{ p.amount }}</td>
-        <td>{{ p.created_at }}</td>
     </tr>
     {% else %}
     <tr>
-        <td colspan="3">No payments recorded</td>
+        <td colspan="2">No payments recorded</td>
     </tr>
     {% endfor %}
 </table>
