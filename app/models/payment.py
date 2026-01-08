@@ -6,6 +6,5 @@ class Payment(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     amount = db.Column(db.Float, nullable=False)
-    method = db.Column(db.String(50), nullable=False)
     receipt_url = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
