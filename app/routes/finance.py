@@ -26,5 +26,3 @@ def create_payment(procurement_id):
         "finance/create_payment.html",
         pr=pr
     )
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from flask_login import login_required
