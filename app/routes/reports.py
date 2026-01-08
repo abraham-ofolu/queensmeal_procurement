@@ -5,6 +5,8 @@ from sqlalchemy import func
 from app.extensions import db
 from app.models.procurement_request import ProcurementRequest
 from app.models.payment import Payment
+from app.models import ProcurementRequest
+
 
 reports_bp = Blueprint("reports", __name__, url_prefix="/reports")
 
