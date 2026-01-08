@@ -1,0 +1,40 @@
+<div class="modal fade" id="filePreviewModal" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">File Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        <img id="previewImage" class="img-fluid d-none">
+        <iframe id="previewPdf" style="width:100%; height:70vh;" class="d-none"></iframe>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("filePreviewModal").addEventListener("show.bs.modal", function (event) {
+  const button = event.relatedTarget;
+  const fileUrl = button.getAttribute("data-file-url");
+
+  const img = document.getElementById("previewImage");
+  const iframe = document.getElementById("previewPdf");
+
+  img.classList.add("d-none");
+  iframe.classList.add("d-none");
+
+  if (!fileUrl) return;
+
+  if (fileUrl.match(/\.(jpg|jpeg|png|webp)$/i)) {
+    img.src = fileUrl;
+    img.classList.remove("d-none");
+  } else {
+    iframe.src = fileUrl;
+    iframe.classList.remove("d-none");
+  }
+});
+</script>

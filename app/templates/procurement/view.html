@@ -1,39 +1,39 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2>Procurement Request #{{ pr.id }}</h2>
 
-    <div class="card mt-3">
-        <div class="card-body">
-            <p><strong>Item:</strong> {{ pr.item }}</p>
-            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
-            <p><strong>Status:</strong> {{ pr.status }}</p>
-            <p><strong>Vendor:</strong> {{ pr.vendor.name if pr.vendor else "N/A" }}</p>
+<h3>Procurement Request #{{ pr.id }}</h3>
 
-            <hr>
+<table class="table table-bordered">
+  <tr>
+    <th>Item</th>
+    <td>{{ pr.item }}</td>
+  </tr>
+  <tr>
+    <th>Quantity</th>
+    <td>{{ pr.quantity }}</td>
+  </tr>
+  <tr>
+    <th>Estimated Cost</th>
+    <td>₦{{ pr.estimated_cost }}</td>
+  </tr>
+  <tr>
+    <th>Status</th>
+    <td>{{ pr.status|upper }}</td>
+  </tr>
+</table>
 
-            <h5>Quotation</h5>
-            {% if pr.quotation_url %}
-                <a href="{{ pr.quotation_url }}" target="_blank" class="btn btn-outline-primary">
-                    View Uploaded Quotation
-                </a>
-            {% else %}
-                <span class="text-muted">No quotation uploaded</span>
-            {% endif %}
+{% if pr.quotation_url %}
+<button
+  class="btn btn-outline-primary"
+  data-bs-toggle="modal"
+  data-bs-target="#filePreviewModal"
+  data-file-url="{{ pr.quotation_url }}">
+  View Quotation
+</button>
+{% else %}
+<p class="text-muted">No quotation uploaded.</p>
+{% endif %}
 
-            <hr>
+{% include "shared/file_preview_modal.html" %}
 
-            {% if pr.status == "approved" %}
-                <a href="{{ url_for('finance.list_payments') }}" class="btn btn-success">
-                    Go to Payments
-                </a>
-            {% endif %}
-
-            <a href="{{ url_for('procurement.list_requests') }}" class="btn btn-secondary">
-                Back
-            </a>
-        </div>
-    </div>
-</div>
 {% endblock %}
