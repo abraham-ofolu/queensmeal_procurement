@@ -1,46 +1,35 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
-from app.models.user import User
+
+from ..models import User
 
 auth_bp = Blueprint("auth", __name__)
-
-def verify_password(user, input_password):
-    """
-    Free-render-safe password check.
-    Adapts to existing DB schema without migrations.
-    """
-
-    # Case 1: hashed password column
-    if hasattr(user, "password_hash") and user.password_hash:
-        return user.password_hash == input_password
-
-    # Case 2: plain password column
-    if hasattr(user, "password_plain") and user.password_plain:
-        return user.password_plain == input_password
-
-    # Case 3: legacy text password
-    if hasattr(user, "password_text") and user.password_text:
-        return user.password_text == input_password
-
-    # Case 4: last-resort fallback (no crash)
-    return False
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+        username = (request.form.get("username") or "").strip().lower()
+        password = request.form.get("password") or ""
 
         user = User.query.filter_by(username=username).first()
-
-        if user and verify_password(user, password):
+        if user and user.check_password(password):
             login_user(user)
-            return redirect(url_for("finance.list_payments"))
+            next_url = request.args.get("next")
+            return redirect(next_url or url_for("auth.after_login"))
 
         flash("Invalid username or password", "danger")
+        return redirect(url_for("auth.login"))
 
-    return render_template("auth/login.html")
+    return render_template("login.html")
+
+
+@auth_bp.route("/after-login")
+@login_required
+def after_login():
+    # Keep it simple: send everyone to finance payments for now
+    # (you can change to role-based routing later)
+    return redirect("/finance/payments")
 
 
 @auth_bp.route("/logout")

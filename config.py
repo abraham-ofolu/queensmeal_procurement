@@ -1,21 +1,14 @@
 import os
 
-
 class Config:
-    # Basic
-    SECRET_KEY = os.getenv("SECRET_KEY", "queensmeal-secret")
+    SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
-    # Database
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL",
-        "postgresql://localhost/queensmeal_procurement"
-    )
+    # Prefer Render Postgres if present
+    db_url = os.environ.get("DATABASE_URL")
+
+    # Render sometimes provides postgres:// which SQLAlchemy may reject; normalize it
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+    SQLALCHEMY_DATABASE_URI = db_url or "sqlite:///app.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    # Uploads
-    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-    UPLOAD_FOLDER = os.path.join(BASE_DIR, "app", "static", "uploads")
-    MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB
-
-    # Business limits (PASS 1: keep one limit, do not expand)
-    FINANCE_PAYMENT_LIMIT = float(os.getenv("FINANCE_PAYMENT_LIMIT", "250000"))
