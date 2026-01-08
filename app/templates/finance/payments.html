@@ -1,37 +1,42 @@
 {% extends "base.html" %}
+
 {% block content %}
-
 <div class="container mt-4">
-    <h4>Payments</h4>
+    <h2>Payments</h2>
 
-    <table class="table table-bordered table-sm">
+    <table class="table table-bordered table-striped mt-3">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Request</th>
+                <th>Procurement</th>
                 <th>Amount</th>
                 <th>Method</th>
-                <th>Paid By</th>
+                <th>Reference</th>
+                <th>Receipt</th>
                 <th>Date</th>
             </tr>
         </thead>
         <tbody>
-        {% for p in payments %}
+            {% for payment in payments %}
             <tr>
-                <td>{{ p.id }}</td>
-                <td>#{{ p.procurement_request_id }}</td>
-                <td>₦{{ "{:,.2f}".format(p.amount) }}</td>
-                <td>{{ p.method }}</td>
-                <td>{{ p.paid_by }}</td>
-                <td>{{ p.paid_at.strftime("%Y-%m-%d %H:%M") if p.paid_at }}</td>
+                <td>{{ payment.id }}</td>
+                <td>#{{ payment.procurement_id }}</td>
+                <td>₦{{ "{:,.2f}".format(payment.amount) }}</td>
+                <td>{{ payment.method }}</td>
+                <td>{{ payment.reference }}</td>
+                <td>
+                    {% if payment.receipt_url %}
+                        <a href="{{ payment.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            View Receipt
+                        </a>
+                    {% else %}
+                        <span class="text-muted">No receipt</span>
+                    {% endif %}
+                </td>
+                <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
             </tr>
-        {% else %}
-            <tr>
-                <td colspan="6" class="text-center">No payments recorded</td>
-            </tr>
-        {% endfor %}
+            {% endfor %}
         </tbody>
     </table>
 </div>
-
 {% endblock %}

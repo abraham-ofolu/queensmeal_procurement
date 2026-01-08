@@ -20,7 +20,7 @@ class Payment(db.Model):
     receipt = db.Column(db.String(255), nullable=True)        # uploaded file name
     paid_by = db.Column(db.String(80), nullable=True)         # username
     paid_at = db.Column(db.DateTime, nullable=True)
-
+    receipt_url = db.Column(db.String(500)),
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # relationship (NO backref conflict)

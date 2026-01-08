@@ -11,7 +11,8 @@ from app.routes.procurement import procurement_bp
 from app.routes.vendors import vendors_bp
 from app.routes.finance import finance_bp
 from app.routes.reports import reports_bp
-
+from app.routes.finance import finance_bp
+from app.utils.cloudinary import init_cloudinary
 
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
@@ -24,6 +25,8 @@ def load_user(user_id):
 
 def create_app():
     app = Flask(__name__)
+    ...
+    init_cloudinary(app)
 
     # =========================
     # CONFIG

@@ -1,9 +1,21 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_required
 from datetime import datetime
+from cloudinary.uploader import upload 
 
 from app.extensions import db
 from app.models import ProcurementRequest, Payment
+
+file = request.files.get("receipt")
+if file:
+    result = upload(file,
+                    folder="queensmeal/receipts"
+                     )
+    receipt_url = result["secure_url"]
+else:
+    receipt_url = None
+
+
 
 # -------------------------------------------------
 # BLUEPRINT MUST BE DEFINED FIRST

@@ -2,67 +2,38 @@
 
 {% block content %}
 <div class="container mt-4">
+    <h2>Procurement Request #{{ pr.id }}</h2>
 
-  <h3>Procurement Request Details</h3>
+    <div class="card mt-3">
+        <div class="card-body">
+            <p><strong>Item:</strong> {{ pr.item }}</p>
+            <p><strong>Amount:</strong> ₦{{ "{:,.2f}".format(pr.amount) }}</p>
+            <p><strong>Status:</strong> {{ pr.status }}</p>
+            <p><strong>Vendor:</strong> {{ pr.vendor.name if pr.vendor else "N/A" }}</p>
 
-  <table class="table table-bordered mt-3">
-    <tr>
-      <th>Title</th>
-      <td>{{ pr.title }}</td>
-    </tr>
-    <tr>
-      <th>Description</th>
-      <td>{{ pr.description }}</td>
-    </tr>
-    <tr>
-      <th>Amount</th>
-      <td>₦{{ "{:,.2f}".format(pr.amount) }}</td>
-    </tr>
-    <tr>
-      <th>Status</th>
-      <td>
-        <span class="badge bg-info text-dark">
-          {{ pr.status|capitalize }}
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <th>Created At</th>
-      <td>{{ pr.created_at.strftime('%d %b %Y, %H:%M') }}</td>
-    </tr>
-  </table>
+            <hr>
 
-  {% if pr.quotation %}
-  <div class="mb-3">
-    <strong>Quotation:</strong><br>
-    <a
-      href="{{ url_for('procurement.view_quotation', filename=pr.quotation) }}"
-      target="_blank"
-      class="btn btn-outline-secondary btn-sm mt-1"
-    >
-      View Uploaded Quotation
-    </a>
-  </div>
-  {% endif %}
+            <h5>Quotation</h5>
+            {% if pr.quotation_url %}
+                <a href="{{ pr.quotation_url }}" target="_blank" class="btn btn-outline-primary">
+                    View Uploaded Quotation
+                </a>
+            {% else %}
+                <span class="text-muted">No quotation uploaded</span>
+            {% endif %}
 
-  <div class="mt-4 d-flex gap-2">
+            <hr>
 
-    <!-- ✅ FIXED PAYMENT LINK -->
-    <a
-      href="{{ url_for('finance.create_payment', procurement_id=pr.id) }}"
-      class="btn btn-success"
-    >
-      Record Payment
-    </a>
+            {% if pr.status == "approved" %}
+                <a href="{{ url_for('finance.list_payments') }}" class="btn btn-success">
+                    Go to Payments
+                </a>
+            {% endif %}
 
-    <a
-      href="{{ url_for('procurement.list_requests') }}"
-      class="btn btn-secondary"
-    >
-      Back to List
-    </a>
-
-  </div>
-
+            <a href="{{ url_for('procurement.list_requests') }}" class="btn btn-secondary">
+                Back
+            </a>
+        </div>
+    </div>
 </div>
 {% endblock %}
