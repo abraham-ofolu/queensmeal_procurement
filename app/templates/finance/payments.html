@@ -1,44 +1,24 @@
 {% extends "base.html" %}
+
 {% block content %}
+<h2>Payments</h2>
 
-<h3>Payments</h3>
-
-<table class="table table-striped mt-3">
-  <thead>
+<table border="1" cellpadding="8">
     <tr>
-      <th>ID</th>
-      <th>Procurement</th>
-      <th>Amount</th>
-      <th>Paid By</th>
-      <th>Receipt</th>
-      <th>Date</th>
+        <th>ID</th>
+        <th>Amount</th>
+        <th>Date</th>
     </tr>
-  </thead>
-  <tbody>
     {% for p in payments %}
     <tr>
-      <td>{{ p.id }}</td>
-      <td>{{ p.procurement_id }}</td>
-      <td>₦{{ p.amount }}</td>
-      <td>{{ p.paid_by }}</td>
-      <td>
-        {% if p.receipt_url %}
-          <button class="btn btn-sm btn-outline-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#filePreviewModal"
-                  data-file-url="{{ p.receipt_url }}">
-            View
-          </button>
-        {% else %}
-          <span class="text-muted">None</span>
-        {% endif %}
-      </td>
-      <td>{{ p.created_at }}</td>
+        <td>{{ p.id }}</td>
+        <td>{{ p.amount }}</td>
+        <td>{{ p.created_at }}</td>
+    </tr>
+    {% else %}
+    <tr>
+        <td colspan="3">No payments recorded</td>
     </tr>
     {% endfor %}
-  </tbody>
 </table>
-
-{% include "shared/file_preview_modal.html" %}
-
 {% endblock %}
