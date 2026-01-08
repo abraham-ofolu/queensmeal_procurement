@@ -1,42 +1,44 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2>Payments</h2>
 
-    <table class="table table-bordered table-striped mt-3">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Procurement</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>Reference</th>
-                <th>Receipt</th>
-                <th>Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for payment in payments %}
-            <tr>
-                <td>{{ payment.id }}</td>
-                <td>#{{ payment.procurement_id }}</td>
-                <td>₦{{ "{:,.2f}".format(payment.amount) }}</td>
-                <td>{{ payment.method }}</td>
-                <td>{{ payment.reference }}</td>
-                <td>
-                    {% if payment.receipt_url %}
-                        <a href="{{ payment.receipt_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                            View Receipt
-                        </a>
-                    {% else %}
-                        <span class="text-muted">No receipt</span>
-                    {% endif %}
-                </td>
-                <td>{{ payment.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<h3>Payments</h3>
+
+<table class="table table-striped mt-3">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Procurement</th>
+      <th>Amount</th>
+      <th>Paid By</th>
+      <th>Receipt</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in payments %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.procurement_id }}</td>
+      <td>₦{{ p.amount }}</td>
+      <td>{{ p.paid_by }}</td>
+      <td>
+        {% if p.receipt_url %}
+          <button class="btn btn-sm btn-outline-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#filePreviewModal"
+                  data-file-url="{{ p.receipt_url }}">
+            View
+          </button>
+        {% else %}
+          <span class="text-muted">None</span>
+        {% endif %}
+      </td>
+      <td>{{ p.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% include "shared/file_preview_modal.html" %}
+
 {% endblock %}
