@@ -20,4 +20,9 @@ class ProcurementRequest(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey("users.id"))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    payments = db.relationship("Payment", backref="procurement", lazy=True)
+    payments = db.relationship(
+        "Payment",
+        backref="procurement",
+        cascade="all, delete-orphan",
+        lazy=True,
+    )

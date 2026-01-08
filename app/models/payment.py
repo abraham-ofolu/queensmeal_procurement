@@ -10,15 +10,12 @@ class Payment(db.Model):
     procurement_id = db.Column(
         db.Integer,
         db.ForeignKey("procurement_requests.id"),
-        nullable=False
+        nullable=False,
     )
 
-    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
     method = db.Column(db.String(50), nullable=False)
 
-    # ✅ Cloudinary URL ONLY (no filename, no local path)
-    receipt_url = db.Column(db.String(500), nullable=True)
+    receipt_url = db.Column(db.Text, nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    procurement = db.relationship("ProcurementRequest", backref="payments")
