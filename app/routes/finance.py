@@ -1,10 +1,30 @@
+from flask import Blueprint, render_template, redirect, url_for, request, flash
+from flask_login import login_required
+from datetime import datetime
+
+from app.extensions import db
+from app.models import ProcurementRequest, Payment
+
+# -------------------------------------------------
+# BLUEPRINT MUST BE DEFINED FIRST
+# -------------------------------------------------
+finance_bp = Blueprint("finance", __name__, url_prefix="/finance")
+
+# -------------------------------------------------
+# LIST PAYMENTS
+# -------------------------------------------------
+@finance_bp.route("/payments")
+@login_required
+def list_payments():
+    payments = Payment.query.order_by(Payment.created_at.desc()).all()
+    return render_template("finance/payments.html", payments=payments)
+
+# -------------------------------------------------
+# CREATE PAYMENT (FROM PROCUREMENT)
+# -------------------------------------------------
 @finance_bp.route("/payments/create/<int:procurement_id>", methods=["GET", "POST"])
 @login_required
 def create_payment(procurement_id):
-    from app.models import ProcurementRequest, Payment
-    from app.extensions import db
-    from datetime import datetime
-
     pr = ProcurementRequest.query.get_or_404(procurement_id)
 
     if request.method == "POST":
