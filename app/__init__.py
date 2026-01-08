@@ -6,9 +6,18 @@ from app.routes.procurement import procurement_bp
 from app.routes.finance import finance_bp
 from app.routes.vendors import vendors_bp
 from app.routes.reports import reports_bp
+import os
 
 def create_app():
     app = Flask(__name__)
+
+   
+
+    RESET_DB = os.getenv("RESET_DB", "False").lower() == "true"
+    if RESET_DB:
+        with app.app_context():
+            db.drop_all()
+            db.create_all()
 
     app.config["SECRET_KEY"] = "super-secret-key"
     app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get(

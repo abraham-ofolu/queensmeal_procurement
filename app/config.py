@@ -20,13 +20,11 @@ class Config:
     #
     # If DATABASE_URL is not set, fallback to local postgres (DB name only)
     # You can also switch fallback to SQLite if you want.
-    DATABASE_URL = os.getenv("DATABASE_URL")
+   
 
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL or os.getenv(
-        "SQLALCHEMY_DATABASE_URI",
-        "postgresql+psycopg2://localhost/queensmeal_procurement",
-    )
+    SQLALCHEMY_DATABASE_URI = os.environ["DATABASE_URL"]
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
 
     # =========================
     # UPLOADS (Quotations, etc.)
