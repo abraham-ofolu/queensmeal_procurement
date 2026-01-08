@@ -18,7 +18,7 @@ def create_app():
         with app.app_context():
             db.drop_all()
             db.create_all()
-
+    app.config.from_object("config.Config")
     app.config["SECRET_KEY"] = "super-secret-key"
     app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get(
         "DATABASE_URL",
@@ -36,9 +36,7 @@ def create_app():
     app.register_blueprint(vendors_bp, url_prefix="/vendors")
     app.register_blueprint(reports_bp, url_prefix="/reports")
 
-    with app.app_context():
-        db.create_all()
-        _ensure_default_users()
+    
 
     return app
 
