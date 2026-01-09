@@ -1,7 +1,6 @@
 from datetime import datetime
 from app.extensions import db
 
-
 class ProcurementRequest(db.Model):
     __tablename__ = "procurement_requests"
 
@@ -15,17 +14,16 @@ class ProcurementRequest(db.Model):
     vendor_id = db.Column(
         db.Integer,
         db.ForeignKey("vendors.id"),
-        nullable=True
+        nullable=False
     )
 
     status = db.Column(
         db.String(50),
-        nullable=False,
-        default="pending"
+        default="pending",
+        nullable=False
     )
 
-    # 🔴 IMPORTANT: MATCHES EXISTING POSTGRES COLUMN
-    created_by = db.Column(
+    created_by_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
         nullable=False
