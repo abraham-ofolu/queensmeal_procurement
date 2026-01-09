@@ -1,22 +1,12 @@
-from datetime import datetime
 from app.extensions import db
-
+from datetime import datetime
 
 class Vendor(db.Model):
     __tablename__ = "vendors"
 
     id = db.Column(db.Integer, primary_key=True)
-
-    name = db.Column(db.String(255), nullable=False)
-    category = db.Column(db.String(100))
-    phone = db.Column(db.String(50))
-    email = db.Column(db.String(255))
-
-    bank_name = db.Column(db.String(100))
-    account_name = db.Column(db.String(255))
-    account_number = db.Column(db.String(50))
-
+    name = db.Column(db.String(120), nullable=False)
+    bank_name = db.Column(db.String(120), nullable=False)
+    account_name = db.Column(db.String(120), nullable=False)
+    account_number = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Vendor {self.name}>"
