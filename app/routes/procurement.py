@@ -6,26 +6,22 @@ from app.extensions import db
 from app.models.procurement import ProcurementRequest
 from app.models.vendor import Vendor
 
-procurement_bp = Blueprint(
-    "procurement",
-    __name__,
-    url_prefix="/procurement"
-)
+procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
+
 
 @procurement_bp.route("/")
 @login_required
 def index():
-    requests = (
-        ProcurementRequest.query
-        .order_by(ProcurementRequest.created_at.desc())
-        .all()
-    )
+    requests = ProcurementRequest.query.order_by(
+        ProcurementRequest.created_at.desc()
+    ).all()
     return render_template("procurement/index.html", requests=requests)
+
 
 @procurement_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create_request():
-    vendors = Vendor.query.order_by(Vendor.name.asc()).all()
+    vendors = Vendor.query.all()
 
     if request.method == "POST":
         title = request.form.get("title")
@@ -40,11 +36,11 @@ def create_request():
         pr = ProcurementRequest(
             title=title,
             description=description,
-            amount=amount,
-            vendor_id=vendor_id,
-            created_by_id=current_user.id,
+            amount=float(amount),
+            vendor_id=int(vendor_id),
             status="pending",
-            created_at=datetime.utcnow()
+            created_by=current_user.id,
+            created_at=datetime.utcnow(),
         )
 
         db.session.add(pr)
@@ -53,7 +49,4 @@ def create_request():
         flash("Procurement request submitted successfully", "success")
         return redirect(url_for("procurement.index"))
 
-    return render_template(
-        "procurement/create.html",
-        vendors=vendors
-    )
+    return render_template("procurement/create.html", vendors=vendors)
