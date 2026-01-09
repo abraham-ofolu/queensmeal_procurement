@@ -6,7 +6,7 @@ from app.extensions import db
 from app.models.procurement import ProcurementRequest
 from app.models.vendor import Vendor
 
-procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
+procurement_bp = Blueprint("procurement", __name__)
 
 
 @procurement_bp.route("/")
@@ -26,27 +26,24 @@ def create_request():
     if request.method == "POST":
         item_name = request.form.get("item_name")
         quantity = request.form.get("quantity")
-        vendor_id = request.form.get("vendor_id")
+        vendor_name = request.form.get("vendor_name")
 
-        if not item_name or not quantity or not vendor_id:
+        if not item_name or not quantity or not vendor_name:
             flash("All fields are required", "danger")
             return redirect(url_for("procurement.create_request"))
 
         pr = ProcurementRequest(
-            item_name=item_name,   # ✅ MATCHES MODEL
+            item_name=item_name,      # ✅ FIXED
             quantity=int(quantity),
-            vendor_id=int(vendor_id),
-            status="PENDING_DIRECTOR",
-            created_at=datetime.utcnow(),
+            vendor_name=vendor_name,
+            status="pending",
+            created_at=datetime.utcnow()
         )
 
         db.session.add(pr)
         db.session.commit()
 
-        flash("Procurement request submitted successfully", "success")
+        flash("Procurement request created successfully", "success")
         return redirect(url_for("procurement.list_requests"))
 
-    return render_template(
-        "procurement/create.html",
-        vendors=vendors
-    )
+    return render_template("procurement/create.html", vendors=vendors)
