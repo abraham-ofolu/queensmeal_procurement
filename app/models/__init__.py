@@ -1,11 +1,3 @@
-from .user import User
-from .vendor import Vendor
-from .procurement import ProcurementRequest
-from .payment import Payment
-
-__all__ = [
-    "User",
-    "Vendor",
-    "ProcurementRequest",
-    "Payment",
-]
+from app.models.user import User
+from app.models.vendor import Vendor
+from app.models.procurement import ProcurementRequest
