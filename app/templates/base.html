@@ -3,80 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>Queensmeal Procurement</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <!-- FIXED: point brand to procurement list -->
-        <a class="navbar-brand" href="{{ url_for('procurement.list_requests') }}">
-            Queensmeal
-        </a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+    <a class="navbar-brand" href="{{ url_for('procurement.index') }}">
+        Queensmeal
+    </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('procurement.list_requests') }}">
-                        Procurement
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('vendors.list_vendors') }}">
-                        Vendors
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('finance.list_payments') }}">
-                        Payments
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('reports.index') }}">
-                        Reports
-                    </a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
-                        Logout
-                    </a>
-                </li>
-
-            </ul>
-        </div>
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('procurement.index') }}">Procurement</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('vendors.list_vendors') }}">Vendors</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('finance.list_payments') }}">Finance</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">Logout</a>
+            </li>
+        </ul>
     </div>
 </nav>
 
 <div class="container mt-4">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} alert-dismissible fade show">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-          </div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
-
     {% block content %}{% endblock %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
