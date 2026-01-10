@@ -1,14 +1,13 @@
 from datetime import datetime
 from app.extensions import db
 
-
 class ProcurementRequest(db.Model):
     __tablename__ = "procurement_requests"
 
     id = db.Column(db.Integer, primary_key=True)
 
     title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text)
+    description = db.Column(db.Text, nullable=True)
 
     amount = db.Column(db.Numeric(12, 2), nullable=False)
 
@@ -36,7 +35,7 @@ class ProcurementRequest(db.Model):
         nullable=False
     )
 
-    # ✅ ONE clean relationship
+    # 🔑 CORRECT & REQUIRED RELATIONSHIP
     quotations = db.relationship(
         "ProcurementQuotation",
         back_populates="procurement",

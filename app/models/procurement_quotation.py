@@ -1,7 +1,6 @@
 from datetime import datetime
 from app.extensions import db
 
-
 class ProcurementQuotation(db.Model):
     __tablename__ = "procurement_quotations"
 
@@ -19,4 +18,10 @@ class ProcurementQuotation(db.Model):
         db.DateTime,
         default=datetime.utcnow,
         nullable=False
+    )
+
+    # 🔑 THIS WAS MISSING — NOW FIXED
+    procurement = db.relationship(
+        "ProcurementRequest",
+        back_populates="quotations"
     )
