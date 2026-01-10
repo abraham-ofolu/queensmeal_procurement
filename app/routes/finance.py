@@ -1,9 +1,7 @@
 from flask import Blueprint, render_template
-from flask_login import login_required, current_user
+from flask_login import login_required
 
-from app.extensions import db
 from app.models.payment import Payment
-from app.models.procurement import ProcurementRequest
 
 finance_bp = Blueprint(
     "finance",
@@ -11,7 +9,7 @@ finance_bp = Blueprint(
     url_prefix="/finance"
 )
 
-@finance_bp.route("/payments", methods=["GET"])
+@finance_bp.route("/payments")
 @login_required
 def payments():
     payments = (

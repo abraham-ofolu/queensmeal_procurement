@@ -20,9 +20,3 @@ class ProcurementQuotation(db.Model):
         default=datetime.utcnow,
         nullable=False
     )
-
-    # ✅ MATCHING relationship (NO backref)
-    procurement = db.relationship(
-        "ProcurementRequest",
-        back_populates="quotations"
-    )

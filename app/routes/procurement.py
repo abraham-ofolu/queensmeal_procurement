@@ -1,6 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import os
+from app.models.procurement_quotation import ProcurementQuotation
+from flask import current_app
+
 
 from app.extensions import db
 from app.models.procurement import ProcurementRequest
@@ -11,6 +16,39 @@ procurement_bp = Blueprint(
     __name__,
     url_prefix="/procurement"
 )
+
+
+@procurement_bp.route("/<int:procurement_id>/upload-quotation", methods=["POST"])
+@login_required
+def upload_quotation(procurement_id):
+    file = request.files.get("quotation")
+
+    if not file or file.filename == "":
+        flash("No file selected", "danger")
+        return redirect(url_for("procurement.index"))
+
+    filename = secure_filename(file.filename)
+
+    upload_path = os.path.join(
+        current_app.root_path,
+        "static",
+        "quotations",
+        filename
+    )
+
+    file.save(upload_path)
+
+    quotation = ProcurementQuotation(
+        procurement_id=procurement_id,
+        filename=filename
+    )
+
+    db.session.add(quotation)
+    db.session.commit()
+
+    flash("Quotation uploaded successfully", "success")
+    return redirect(url_for("procurement.index"))
+
 
 # =========================
 # ACCESS GUARD

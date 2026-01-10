@@ -25,6 +25,18 @@
             <td>{{ req.status }}</td>
 
             <!-- quotations disabled temporarily -->
+
+            <form method="POST"
+      action="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
+      enctype="multipart/form-data"
+      style="display:inline">
+
+    <input type="file" name="quotation" required>
+    <button type="submit" class="btn btn-sm btn-secondary">
+        Upload Quotation
+    </button>
+</form>
+
             
             <td>
                 <!-- ✅ UPLOAD QUOTATION BUTTON -->
