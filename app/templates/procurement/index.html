@@ -1,43 +1,49 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-4">
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Procurement Requests</h2>
-    <a href="{{ url_for('procurement.create_request') }}" class="btn btn-primary">
-      New Request
-    </a>
-  </div>
+<h2>Procurement Requests</h2>
 
-  {% if requests %}
-    <table class="table table-striped table-bordered">
-      <thead>
+<a href="{{ url_for('procurement.create_request') }}" class="btn btn-primary mb-3">
+    New Procurement Request
+</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
         <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Amount</th>
-          <th>Status</th>
-          <th>Created At</th>
+            <th>Title</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Quotations</th>
+            <th>Actions</th>
         </tr>
-      </thead>
-      <tbody>
+    </thead>
+    <tbody>
         {% for req in requests %}
         <tr>
-          <td>{{ req.id }}</td>
-          <td>{{ req.title }}</td>
-          <td>₦{{ "{:,.2f}".format(req.amount) }}</td>
-          <td>{{ req.status|capitalize }}</td>
-          <td>{{ req.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+            <td>{{ req.title }}</td>
+            <td>{{ req.amount }}</td>
+            <td>{{ req.status }}</td>
+
+            <td>
+                {% if req.quotations %}
+                    {{ req.quotations|length }} uploaded
+                {% else %}
+                    None
+                {% endif %}
+            </td>
+
+            <td>
+                <!-- ✅ UPLOAD QUOTATION BUTTON -->
+                <a
+                    href="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
+                    class="btn btn-sm btn-secondary"
+                >
+                    Upload Quotation
+                </a>
+            </td>
         </tr>
         {% endfor %}
-      </tbody>
-    </table>
-  {% else %}
-    <div class="alert alert-info">
-      No procurement requests yet.
-    </div>
-  {% endif %}
+    </tbody>
+</table>
 
-</div>
 {% endblock %}
