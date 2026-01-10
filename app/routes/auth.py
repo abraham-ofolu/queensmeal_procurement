@@ -15,7 +15,7 @@ def login():
 
         if user and user.check_password(password):
             login_user(user)
-            next_url = request.args.get("next") or url_for("finance.list_payments")
+            next_url = request.args.get("next") or url_for("finance.payments")
             return redirect(next_url)
 
         flash("Invalid username or password", "danger")
