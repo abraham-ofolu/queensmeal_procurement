@@ -24,14 +24,8 @@
             <td>{{ req.amount }}</td>
             <td>{{ req.status }}</td>
 
-            <td>
-                {% if req.quotations %}
-                    {{ req.quotations|length }} uploaded
-                {% else %}
-                    None
-                {% endif %}
-            </td>
-
+            <!-- quotations disabled temporarily -->
+            
             <td>
                 <!-- ✅ UPLOAD QUOTATION BUTTON -->
                 <a
