@@ -1,51 +1,42 @@
 {% extends "base.html" %}
+
 {% block content %}
+<div class="container mt-4">
+    <h2>Procurement Requests</h2>
 
-<h2>Procurement Requests</h2>
+    <a href="{{ url_for('procurement.create_request') }}" class="btn btn-primary mb-3">
+        New Procurement Request
+    </a>
 
-<a href="{{ url_for('procurement.create_request') }}" class="btn btn-primary mb-3">
-    New Procurement Request
-</a>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Quotation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in requests %}
+            <tr>
+                <td>{{ req.title }}</td>
+                <td>{{ req.amount }}</td>
+                <td>{{ req.status }}</td>
+                <td>
+                    <form method="POST"
+                          action="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
+                          enctype="multipart/form-data">
 
-<table class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Quotations</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for req in requests %}
-        <tr>
-            <td>{{ req.title }}</td>
-            <td>{{ req.amount }}</td>
-            <td>{{ req.status }}</td>
-
-            <!-- quotations disabled temporarily -->
-
-            <form method="POST"
-      action="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
-      enctype="multipart/form-data"
-      style="display:inline">
-
-    <input type="file" name="quotation" required>
-    <button type="submit" class="btn btn-sm btn-secondary">
-        Upload Quotation
-    </button>
-</form>
-
-            
-            <td>
-                <!-- ✅ UPLOAD QUOTATION BUTTON -->
-               <!-- Quotation upload disabled (route not implemented yet) -->
-
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
+                        <input type="file" name="quotation" required>
+                        <button type="submit" class="btn btn-sm btn-secondary mt-1">
+                            Upload
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
