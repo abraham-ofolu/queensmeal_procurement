@@ -1,13 +1,13 @@
+import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
-from datetime import datetime
-import os
 from werkzeug.utils import secure_filename
+from datetime import datetime
 
 from app.extensions import db
 from app.models.procurement import ProcurementRequest
-from app.models.vendor import Vendor
 from app.models.procurement_quotation import ProcurementQuotation
+from app.models.vendor import Vendor
 
 procurement_bp = Blueprint(
     "procurement",
@@ -25,10 +25,7 @@ def index():
         ProcurementRequest.created_at.desc()
     ).all()
 
-    return render_template(
-        "procurement/index.html",
-        requests=requests
-    )
+    return render_template("procurement/index.html", requests=requests)
 
 # =========================
 # CREATE PROCUREMENT REQUEST
@@ -39,16 +36,11 @@ def create_request():
     vendors = Vendor.query.all()
 
     if request.method == "POST":
-        title = request.form["title"]
-        description = request.form.get("description")
-        amount = request.form["amount"]
-        vendor_id = request.form.get("vendor_id")
-
         pr = ProcurementRequest(
-            title=title,
-            description=description,
-            amount=amount,
-            vendor_id=vendor_id if vendor_id else None,
+            title=request.form["title"],
+            description=request.form.get("description"),
+            amount=request.form["amount"],
+            vendor_id=request.form.get("vendor_id") or None,
             created_by=current_user.id
         )
 
@@ -58,38 +50,36 @@ def create_request():
         flash("Procurement request created successfully", "success")
         return redirect(url_for("procurement.index"))
 
-    return render_template(
-        "procurement/create.html",
-        vendors=vendors
-    )
+    return render_template("procurement/create.html", vendors=vendors)
 
 # =========================
-# UPLOAD QUOTATION (SAFE)
+# UPLOAD QUOTATION
 # =========================
-@procurement_bp.route("/<int:procurement_id>/upload-quotation", methods=["POST"])
+@procurement_bp.route("/<int:procurement_id>/upload", methods=["POST"])
 @login_required
 def upload_quotation(procurement_id):
-    file = request.files.get("quotation")
+    procurement = ProcurementRequest.query.get_or_404(procurement_id)
 
-    if not file or file.filename == "":
+    if "quotation" not in request.files:
+        flash("No file selected", "danger")
+        return redirect(url_for("procurement.index"))
+
+    file = request.files["quotation"]
+
+    if file.filename == "":
         flash("No file selected", "danger")
         return redirect(url_for("procurement.index"))
 
     filename = secure_filename(file.filename)
 
-    upload_dir = os.path.join(
-        current_app.root_path,
-        "static",
-        "quotations"
-    )
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
+    os.makedirs(upload_folder, exist_ok=True)
 
-    os.makedirs(upload_dir, exist_ok=True)
-
-    file_path = os.path.join(upload_dir, filename)
-    file.save(file_path)
+    filepath = os.path.join(upload_folder, filename)
+    file.save(filepath)
 
     quotation = ProcurementQuotation(
-        procurement_id=procurement_id,
+        procurement_id=procurement.id,
         filename=filename
     )
 
