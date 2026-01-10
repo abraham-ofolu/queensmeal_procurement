@@ -1,25 +1,29 @@
-import os
 from flask import Flask
-from app.extensions import db, login_manager
+from flask_login import LoginManager
+from app.extensions import db
+from app.models.user import User
 
 def create_app():
     app = Flask(__name__)
 
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret")
-
-    database_url = os.getenv("SQLALCHEMY_DATABASE_URI")
-    if not database_url:
-        raise RuntimeError("SQLALCHEMY_DATABASE_URI is not set")
-
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # 🔑 REQUIRED FOR FILE UPLOADS
-    app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "uploads")
+    app.config.from_mapping(
+        SECRET_KEY="dev-secret",
+        SQLALCHEMY_DATABASE_URI=app.config.get("SQLALCHEMY_DATABASE_URI"),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    )
 
     db.init_app(app)
+
+    # ✅ LOGIN MANAGER (THIS WAS MISSING / BROKEN)
+    login_manager = LoginManager()
+    login_manager.login_view = "auth.login"
     login_manager.init_app(app)
 
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # ✅ BLUEPRINTS
     from app.routes.auth import auth_bp
     from app.routes.procurement import procurement_bp
     from app.routes.vendors import vendors_bp
