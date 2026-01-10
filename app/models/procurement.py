@@ -1,7 +1,6 @@
 from datetime import datetime
 from app.extensions import db
 
-
 class ProcurementRequest(db.Model):
     __tablename__ = "procurement_requests"
 
@@ -36,30 +35,10 @@ class ProcurementRequest(db.Model):
         nullable=False
     )
 
-    # ✅ relationship to quotations (OPTIONAL)
+    # ✅ RELATIONSHIP (THIS IS WHAT FIXES THE ERROR)
     quotations = db.relationship(
         "ProcurementQuotation",
         backref="procurement",
         lazy=True,
         cascade="all, delete-orphan"
-    )
-
-
-class ProcurementQuotation(db.Model):
-    __tablename__ = "procurement_quotations"
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    procurement_id = db.Column(
-        db.Integer,
-        db.ForeignKey("procurement_requests.id"),
-        nullable=False
-    )
-
-    filename = db.Column(db.String(255), nullable=False)
-
-    uploaded_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow,
-        nullable=False
     )

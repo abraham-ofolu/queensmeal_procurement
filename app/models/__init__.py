@@ -1,4 +1,4 @@
 from .user import User
-
-from app.models.vendor import Vendor
-from app.models.procurement import ProcurementRequest
+from .vendor import Vendor
+from .procurement import ProcurementRequest
+from .procurement_quotation import ProcurementQuotation
