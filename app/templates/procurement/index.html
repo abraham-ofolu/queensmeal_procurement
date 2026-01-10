@@ -1,45 +1,52 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2>Procurement Requests</h2>
 
-    <a href="{{ url_for('procurement.create_request') }}" class="btn btn-primary mb-3">
-        New Procurement Request
-    </a>
+<h2>Procurement Requests</h2>
 
-    <input type="file" name="quotation" required>
+<a href="{{ url_for('procurement.create') }}" class="btn btn-primary mb-3">
+    New Procurement Request
+</a>
 
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Amount</th>
+            <th>Vendor</th>
+            <th>Quotations</th>
+            <th>Upload</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for req in requests %}
+        <tr>
+            <td>{{ req.title }}</td>
+            <td>{{ req.amount }}</td>
+            <td>{{ req.vendor.name if req.vendor else "N/A" }}</td>
+            <td>
+                {% if req.quotations %}
+                    <ul>
+                        {% for q in req.quotations %}
+                            <li>{{ q.filename }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    None
+                {% endif %}
+            </td>
+            <td>
+                <form method="POST"
+                      action="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
+                      enctype="multipart/form-data">
+                    <input type="file" name="quotation_file" required>
+                    <button type="submit" class="btn btn-sm btn-secondary mt-1">
+                        Upload
+                    </button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Quotation</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for req in requests %}
-            <tr>
-                <td>{{ req.title }}</td>
-                <td>{{ req.amount }}</td>
-                <td>{{ req.status }}</td>
-                <td>
-                    <form method="POST"
-                          action="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
-                          enctype="multipart/form-data">
-
-                        <input type="file" name="quotation" required>
-                        <button type="submit" class="btn btn-sm btn-secondary mt-1">
-                            Upload
-                        </button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
 {% endblock %}
