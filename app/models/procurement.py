@@ -1,13 +1,14 @@
 from datetime import datetime
 from app.extensions import db
 
+
 class ProcurementRequest(db.Model):
     __tablename__ = "procurement_requests"
 
     id = db.Column(db.Integer, primary_key=True)
 
     title = db.Column(db.String(255), nullable=False)
-    description = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text)
 
     amount = db.Column(db.Numeric(12, 2), nullable=False)
 
@@ -35,10 +36,9 @@ class ProcurementRequest(db.Model):
         nullable=False
     )
 
-    # ✅ RELATIONSHIP (THIS IS WHAT FIXES THE ERROR)
+    # ✅ ONE clean relationship
     quotations = db.relationship(
         "ProcurementQuotation",
-        backref="procurement",
-        lazy=True,
+        back_populates="procurement",
         cascade="all, delete-orphan"
     )

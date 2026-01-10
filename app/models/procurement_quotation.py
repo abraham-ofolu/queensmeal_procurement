@@ -21,10 +21,8 @@ class ProcurementQuotation(db.Model):
         nullable=False
     )
 
+    # ✅ MATCHING relationship (NO backref)
     procurement = db.relationship(
         "ProcurementRequest",
-        backref=db.backref(
-            "quotations",
-            lazy="select"
-        )
+        back_populates="quotations"
     )
