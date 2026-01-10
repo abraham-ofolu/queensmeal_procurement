@@ -6,47 +6,57 @@ from app.extensions import db
 from app.models.procurement import ProcurementRequest
 from app.models.vendor import Vendor
 
-procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
+# ✅ Blueprint MUST be defined first
+procurement_bp = Blueprint(
+    "procurement",
+    __name__,
+    url_prefix="/procurement"
+)
 
-
-@procurement_bp.route("/")
+# =========================
+# LIST PROCUREMENT REQUESTS
+# =========================
+@procurement_bp.route("/", methods=["GET"])
 @login_required
 def index():
     requests = ProcurementRequest.query.order_by(
         ProcurementRequest.created_at.desc()
     ).all()
-    return render_template("procurement/index.html", requests=requests)
 
+    return render_template(
+        "procurement/index.html",
+        requests=requests
+    )
 
+# =========================
+# CREATE PROCUREMENT REQUEST
+# =========================
 @procurement_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create_request():
     vendors = Vendor.query.all()
 
     if request.method == "POST":
-        title = request.form.get("title")
+        title = request.form["title"]
         description = request.form.get("description")
-        amount = request.form.get("amount")
+        amount = request.form["amount"]
         vendor_id = request.form.get("vendor_id")
-
-        if not title or not amount or not vendor_id:
-            flash("Title, amount and vendor are required", "danger")
-            return redirect(url_for("procurement.create_request"))
 
         pr = ProcurementRequest(
             title=title,
             description=description,
-            amount=float(amount),
-            vendor_id=int(vendor_id),
-            status="pending",
-            created_by=current_user.id,
-            created_at=datetime.utcnow(),
+            amount=amount,
+            vendor_id=vendor_id if vendor_id else None,
+            created_by=current_user.id
         )
 
         db.session.add(pr)
         db.session.commit()
 
-        flash("Procurement request submitted successfully", "success")
+        flash("Procurement request created successfully", "success")
         return redirect(url_for("procurement.index"))
 
-    return render_template("procurement/create.html", vendors=vendors)
+    return render_template(
+        "procurement/create.html",
+        vendors=vendors
+    )
