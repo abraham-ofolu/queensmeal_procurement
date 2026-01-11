@@ -1,22 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Payments</h2>
+<h2>Finance – Payments</h2>
 
-<table border="1" cellpadding="8">
-    <tr>
-        <th>ID</th>
-        <th>Amount</th>
-    </tr>
-    {% for p in payments %}
-    <tr>
-        <td>{{ p.id }}</td>
-        <td>{{ p.amount }}</td>
-    </tr>
-    {% else %}
-    <tr>
-        <td colspan="2">No payments recorded</td>
-    </tr>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for req in requests %}
+        <tr>
+            <td>{{ req.id }}</td>
+            <td>{{ req.title }}</td>
+            <td>{{ req.amount }}</td>
+            <td>
+                {% if req.status == "paid" %}
+                    <span class="badge bg-success">Paid</span>
+                {% else %}
+                    <span class="badge bg-warning">{{ req.status }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if req.status != "paid" %}
+                    <a href="{{ url_for('finance.pay_request', request_id=req.id) }}"
+                       class="btn btn-sm btn-success">
+                        Mark as Paid
+                    </a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
     {% endfor %}
+    </tbody>
 </table>
 {% endblock %}
