@@ -8,24 +8,21 @@ class ProcurementRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     item = db.Column(db.String(255), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False, default=1)
-    amount = db.Column(db.Float, nullable=False, default=0.0)
+    quantity = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
 
-    # Status rules:
-    # pending -> procurement can edit/upload quotation
-    # pending_director -> director must approve/reject
-    # approved -> finance can pay if within limit; director can pay if over limit
-    # rejected -> view only
-    # paid -> read-only
-    status = db.Column(db.String(50), nullable=False, default="pending")
+    status = db.Column(db.String(50), default="pending", nullable=False)
 
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    quotation_file = db.Column(db.String(500), nullable=True)
 
-    # Cloudinary quotation
-    quotation_url = db.Column(db.Text, nullable=True)
-    quotation_public_id = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    payments = db.relationship("Payment", backref="procurement_request", lazy=True)
+    # ✅ THIS IS WHAT WAS MISSING
+    quotations = db.relationship(
+        "ProcurementQuotation",
+        back_populates="procurement_request",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<ProcurementRequest {self.id} {self.item} {self.status}>"
