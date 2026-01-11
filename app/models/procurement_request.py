@@ -3,6 +3,7 @@ from ..extensions import db
 
 class ProcurementRequest(db.Model):
     __tablename__ = "procurement_requests"
+    __table_args__ = {"extend_existing": True}  # ✅ IMPORTANT
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -10,14 +11,10 @@ class ProcurementRequest(db.Model):
     quantity = db.Column(db.Integer, nullable=False, default=1)
     amount = db.Column(db.Numeric(12, 2), nullable=False, default=0)
 
-    status = db.Column(db.String(30), nullable=False, default="pending")  
-    # pending -> director approve/reject
-    # approved -> read-only
-    # rejected -> view-only
+    status = db.Column(db.String(30), nullable=False, default="pending")
 
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    # store one “main” quotation filename for quick display (optional)
     quotation_file = db.Column(db.String(255), nullable=True)
 
     quotations = db.relationship(
