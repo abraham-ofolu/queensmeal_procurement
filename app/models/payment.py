@@ -1,5 +1,6 @@
 from datetime import datetime
-from ..extensions import db
+from app.extensions import db
+
 
 class Payment(db.Model):
     __tablename__ = "payments"
@@ -8,19 +9,24 @@ class Payment(db.Model):
 
     procurement_request_id = db.Column(
         db.Integer,
-        db.ForeignKey("procurement_requests.id", ondelete="CASCADE"),
+        db.ForeignKey("procurement_requests.id"),
         nullable=False,
+        index=True,
     )
 
-    amount = db.Column(db.Numeric(12, 2), nullable=False, default=0)
-    paid_by = db.Column(db.String(30), nullable=False)  # finance or director
+    amount = db.Column(db.Float, nullable=False, default=0.0)
 
-    receipt_path = db.Column(db.String(255), nullable=True)
+    # "finance" or "director"
+    paid_by_role = db.Column(db.String(50), nullable=False)
 
-    status = db.Column(db.String(30), nullable=False, default="approved")  
+    # optional: store username/email if you want
+    paid_by_name = db.Column(db.String(120), nullable=True)
+
+    receipt_url = db.Column(db.Text, nullable=True)
+    receipt_public_id = db.Column(db.Text, nullable=True)
+
+    status = db.Column(db.String(50), nullable=False, default="paid")
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    request = db.relationship("ProcurementRequest", back_populates="payments")
-
     def __repr__(self):
-        return f"<Payment {self.id} {self.amount} {self.paid_by}>"
+        return f"<Payment {self.id} req={self.procurement_request_id} {self.amount} by {self.paid_by_role}>"

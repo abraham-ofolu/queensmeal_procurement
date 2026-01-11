@@ -1,38 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Payments</h2>
+<h2 class="mb-3">Payments</h2>
 
-<h4 class="mt-4">Make Payment</h4>
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>Request ID</th>
-      <th>Item</th>
-      <th>Amount</th>
-      <th>Pay</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for r in requests %}
-    <tr>
-      <td>{{ r.id }}</td>
-      <td>{{ r.item }}</td>
-      <td>{{ r.amount }}</td>
-      <td>
-        <form method="POST" action="{{ url_for('finance.pay_request', req_id=r.id) }}" enctype="multipart/form-data">
-          <input type="number" step="0.01" name="amount" placeholder="Amount" required>
-          <input type="file" name="receipt">
-          <button class="btn btn-sm btn-success">Pay</button>
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<h4 class="mt-4">Payment History</h4>
-<table class="table table-bordered">
+<table class="table table-striped">
   <thead>
     <tr>
       <th>ID</th>
@@ -45,20 +16,20 @@
   </thead>
   <tbody>
     {% for p in payments %}
-    <tr>
-      <td>{{ p.id }}</td>
-      <td>{{ p.procurement_request_id }}</td>
-      <td>{{ p.amount }}</td>
-      <td>{{ p.paid_by }}</td>
-      <td>
-        {% if p.receipt_path %}
-          <a href="{{ url_for('finance.view_receipt', filename=p.receipt_path) }}" target="_blank">View</a>
-        {% else %}
-          -
-        {% endif %}
-      </td>
-      <td>{{ p.created_at }}</td>
-    </tr>
+      <tr>
+        <td>{{ p.id }}</td>
+        <td>{{ p.procurement_request_id }}</td>
+        <td>{{ "{:,.2f}".format(p.amount or 0) }}</td>
+        <td>{{ p.paid_by_role }}</td>
+        <td>
+          {% if p.receipt_url %}
+            <a href="{{ p.receipt_url }}" target="_blank">View</a>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>{{ p.created_at }}</td>
+      </tr>
     {% endfor %}
   </tbody>
 </table>

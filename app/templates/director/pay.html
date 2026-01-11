@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="mb-3">Finance Payment</h2>
+<h2 class="mb-3">Director Payment</h2>
 
 <div class="card p-3 mb-3">
   <p><b>Request ID:</b> {{ req.id }}</p>
@@ -16,7 +16,7 @@
     <input class="form-control" type="file" name="receipt" required>
   </div>
   <button class="btn btn-success" type="submit">Confirm Paid</button>
-  <a class="btn btn-secondary" href="{{ url_for('finance.to_pay') }}">Back</a>
+  <a class="btn btn-secondary" href="{{ url_for('director.approvals') }}">Back</a>
 </form>
 
 {% endblock %}

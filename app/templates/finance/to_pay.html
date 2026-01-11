@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-3">Finance: To Pay</h2>
+
+<div class="alert alert-info">
+  Finance can pay up to <b>{{ "{:,.2f}".format(limit) }}</b>. Anything above is Director responsibility.
+</div>
+
+<h4>Within Limit (Finance Pays)</h4>
+<table class="table table-striped mb-4">
+  <thead>
+    <tr><th>ID</th><th>Item</th><th>Amount</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    {% for r in within %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.item }}</td>
+        <td>{{ "{:,.2f}".format(r.amount or 0) }}</td>
+        <td>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('finance.pay', req_id=r.id) }}">Pay + Upload Receipt</a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4>Above Limit (Director Pays)</h4>
+<table class="table table-striped">
+  <thead>
+    <tr><th>ID</th><th>Item</th><th>Amount</th><th>Note</th></tr>
+  </thead>
+  <tbody>
+    {% for r in above %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.item }}</td>
+        <td>{{ "{:,.2f}".format(r.amount or 0) }}</td>
+        <td>Director must pay</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
