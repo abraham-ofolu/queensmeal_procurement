@@ -6,7 +6,6 @@ class ProcurementQuotation(db.Model):
     __tablename__ = "procurement_quotations"
 
     id = db.Column(db.Integer, primary_key=True)
-
     procurement_request_id = db.Column(
         db.Integer,
         db.ForeignKey("procurement_requests.id"),
@@ -14,14 +13,10 @@ class ProcurementQuotation(db.Model):
     )
 
     file_url = db.Column(db.String(500), nullable=False)
+    file_public_id = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-    # ✅ MATCHING RELATIONSHIP
     procurement_request = db.relationship(
         "ProcurementRequest",
         back_populates="quotations"
     )
-
-    def __repr__(self):
-        return f"<ProcurementQuotation {self.id} for request {self.procurement_request_id}>"
