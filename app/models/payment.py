@@ -10,23 +10,26 @@ class Payment(db.Model):
     procurement_request_id = db.Column(
         db.Integer,
         db.ForeignKey("procurement_requests.id"),
-        nullable=False,
-        index=True,
+        nullable=False
     )
 
-    amount = db.Column(db.Float, nullable=False, default=0.0)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
 
-    # "finance" or "director"
+    # director OR finance
     paid_by_role = db.Column(db.String(50), nullable=False)
 
-    # optional: store username/email if you want
-    paid_by_name = db.Column(db.String(120), nullable=True)
+    # username of payer
+    paid_by_name = db.Column(db.String(100), nullable=False)
 
-    receipt_url = db.Column(db.Text, nullable=True)
-    receipt_public_id = db.Column(db.Text, nullable=True)
+    # Cloudinary receipt
+    receipt_url = db.Column(db.String(500), nullable=True)
+    receipt_public_id = db.Column(db.String(255), nullable=True)
 
-    status = db.Column(db.String(50), nullable=False, default="paid")
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    status = db.Column(db.String(50), default="paid", nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    procurement_request = db.relationship("ProcurementRequest")
 
     def __repr__(self):
-        return f"<Payment {self.id} req={self.procurement_request_id} {self.amount} by {self.paid_by_role}>"
+        return f"<Payment {self.id} {self.amount} by {self.paid_by_role}>"
