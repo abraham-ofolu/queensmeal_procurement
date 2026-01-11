@@ -27,7 +27,12 @@
                 {% if req.quotations %}
                     <ul>
                         {% for q in req.quotations %}
-                            <li>{{ q.filename }}</li>
+                            <li>
+                                <a href="{{ url_for('procurement.view_quotation', filename=q.filename) }}"
+                                   target="_blank">
+                                    {{ q.filename }}
+                                </a>
+                            </li>
                         {% endfor %}
                     </ul>
                 {% else %}
