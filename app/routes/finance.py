@@ -3,8 +3,8 @@ from flask_login import login_required, current_user
 from datetime import datetime
 
 from app.extensions import db
-from app.models.procurement import ProcurementRequest
 from app.models.payment import Payment
+from app.models.procurement import ProcurementRequest
 
 finance_bp = Blueprint(
     "finance",
@@ -12,39 +12,37 @@ finance_bp = Blueprint(
     url_prefix="/finance"
 )
 
-# =========================
-# LIST PAYMENTS / REQUESTS
-# =========================
+
 @finance_bp.route("/payments")
 @login_required
 def payments():
-    requests = ProcurementRequest.query.order_by(
-        ProcurementRequest.created_at.desc()
+    payments = Payment.query.order_by(
+        Payment.created_at.desc()
     ).all()
 
     return render_template(
         "finance/payments.html",
-        requests=requests
+        payments=payments
     )
 
-# =========================
-# MARK AS PAID
-# =========================
-@finance_bp.route("/pay/<int:request_id>")
-@login_required
-def pay_request(request_id):
-    req = ProcurementRequest.query.get_or_404(request_id)
 
-    if req.status == "paid":
-        flash("This request is already paid", "warning")
+@finance_bp.route("/pay/<int:procurement_id>")
+@login_required
+def pay_request(procurement_id):
+    req = ProcurementRequest.query.get_or_404(procurement_id)
+
+    # 🔒 Block double payment
+    existing = Payment.query.filter_by(
+        procurement_id=req.id
+    ).first()
+    if existing:
+        flash("This request has already been paid.", "warning")
         return redirect(url_for("finance.payments"))
 
     payment = Payment(
         procurement_id=req.id,
         amount=req.amount,
-        paid_by=current_user.id,
-        status="paid",
-        created_at=datetime.utcnow()
+        paid_by=current_user.role
     )
 
     req.status = "paid"
@@ -52,5 +50,5 @@ def pay_request(request_id):
     db.session.add(payment)
     db.session.commit()
 
-    flash("Payment recorded successfully", "success")
+    flash("Payment recorded successfully.", "success")
     return redirect(url_for("finance.payments"))
