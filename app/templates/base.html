@@ -19,7 +19,7 @@
     <div id="nav" class="collapse navbar-collapse">
       <ul class="navbar-nav me-auto">
         {% if current_user.is_authenticated %}
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('vendors.index') }}">Vendors</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ url_for('vendors.list_vendors') }}">Vendors</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ url_for('procurement.index') }}">Procurement</a></li>
 
           {% if current_user.role|lower == 'director' %}
