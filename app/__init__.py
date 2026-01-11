@@ -22,6 +22,7 @@ def create_app():
     from app.routes.vendors import vendors_bp
     from app.routes.finance import finance_bp
     from app.routes.director import director_bp
+    
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(procurement_bp)
