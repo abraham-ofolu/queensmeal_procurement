@@ -3,7 +3,8 @@ from flask_login import login_required
 from sqlalchemy import func
 
 from app.extensions import db
-from app.models.procurement import ProcurementRequest
+from app.models.procurement_request import ProcurementRequest
+
 
 reports_bp = Blueprint("reports", __name__)
 
