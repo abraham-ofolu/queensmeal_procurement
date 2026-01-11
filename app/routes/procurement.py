@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Blueprint, render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
@@ -15,7 +15,13 @@ procurement_bp = Blueprint(
     url_prefix="/procurement"
 )
 
-UPLOAD_FOLDER = "app/static/uploads/quotations"
+def quotation_upload_folder():
+    return os.path.join(
+        current_app.root_path,
+        "static",
+        "uploads",
+        "quotations"
+    )
 
 # =========================
 # LIST PROCUREMENT REQUESTS
@@ -73,9 +79,10 @@ def upload_quotation(procurement_id):
         return redirect(url_for("procurement.index"))
 
     filename = secure_filename(file.filename)
+    upload_dir = quotation_upload_folder()
+    os.makedirs(upload_dir, exist_ok=True)
 
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    file.save(os.path.join(UPLOAD_FOLDER, filename))
+    file.save(os.path.join(upload_dir, filename))
 
     quotation = ProcurementQuotation(
         procurement_id=procurement_id,
@@ -96,7 +103,7 @@ def upload_quotation(procurement_id):
 @login_required
 def view_quotation(filename):
     return send_from_directory(
-        UPLOAD_FOLDER,
+        quotation_upload_folder(),
         filename,
         as_attachment=False
     )
