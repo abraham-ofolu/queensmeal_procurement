@@ -3,67 +3,48 @@
 
 <h2>Procurement Requests</h2>
 
-<a href="{{ url_for('procurement.create') }}" class="btn btn-primary mb-3">
-    New Procurement Request
-</a>
+<a href="{{ url_for('procurement.create') }}" class="btn btn-primary mb-3">Create Request</a>
 
 <table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Amount</th>
-            <th>Vendor</th>
-            <th>Quotations</th>
-            <th>Upload</th>
-        </tr>
-    </thead>
-    <tbody>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Quotation</th>
+      <th>Upload Quotation</th>
+    </tr>
+  </thead>
+  <tbody>
     {% for req in requests %}
-        <tr>
-            <td>{{ req.id }}</td>
-            <td>{{ req.title }}</td>
-            <td>{{ req.amount }}</td>
-            <td>{{ req.vendor.name if req.vendor else "N/A" }}</td>
-            <td>
-                {% if req.quotations %}
-                    <ul>
-                        {% for q in req.quotations %}
-                            <li>
-                                <a href="{{ url_for('procurement.view_quotation', filename=q.filename) }}"
-                                   target="_blank">
-                                    {{ q.filename }}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    None
-                {% endif %}
-            </td>
-            <td>
-                <form method="POST"
-                      action="{{ url_for('procurement.upload_quotation', procurement_id=req.id) }}"
-                      enctype="multipart/form-data">
-                    <input type="file" name="quotation_file" required>
-                    <button type="submit" class="btn btn-sm btn-secondary mt-1">
-                        Upload
-                    </button>
-                </form>
-            </td>
-            <td>
-    {% if req.quotation_file %}
-        <a href="{{ url_for('procurement.view_quotation', filename=req.quotation_file) }}"
-           target="_blank">
-            View Quotation
-        </a>
-    {% else %}
-        No quotation
-    {% endif %}
-</td>
+    <tr>
+      <td>{{ req.id }}</td>
+      <td>{{ req.item }}</td>
+      <td>{{ req.quantity }}</td>
+      <td>{{ req.amount }}</td>
+      <td>{{ req.status }}</td>
 
-        </tr>
+      <td>
+        {% if req.quotation_file %}
+          <a href="{{ url_for('procurement.view_quotation', filename=req.quotation_file) }}" target="_blank">
+            View
+          </a>
+        {% else %}
+          -
+        {% endif %}
+      </td>
+
+      <td>
+        <form method="POST" action="{{ url_for('procurement.upload_quotation', req_id=req.id) }}" enctype="multipart/form-data">
+          <input type="file" name="quotation" required>
+          <button type="submit" class="btn btn-sm btn-success">Upload</button>
+        </form>
+      </td>
+    </tr>
     {% endfor %}
-    </tbody>
+  </tbody>
 </table>
 
 {% endblock %}

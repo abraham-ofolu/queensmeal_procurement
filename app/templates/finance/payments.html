@@ -1,43 +1,66 @@
 {% extends "base.html" %}
-
 {% block content %}
-<h2>Finance – Payments</h2>
 
+<h2>Payments</h2>
+
+<h4 class="mt-4">Make Payment</h4>
 <table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Title</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for req in requests %}
-        <tr>
-            <td>{{ req.id }}</td>
-            <td>{{ req.title }}</td>
-            <td>{{ req.amount }}</td>
-            <td>
-                {% if req.status == "paid" %}
-                    <span class="badge bg-success">Paid</span>
-                {% else %}
-                    <span class="badge bg-warning">{{ req.status }}</span>
-                {% endif %}
-            </td>
-            <td>
-                {% if req.status != "paid" %}
-                    <a href="{{ url_for('finance.pay_request', request_id=req.id) }}"
-                       class="btn btn-sm btn-success">
-                        Mark as Paid
-                    </a>
-                {% else %}
-                    —
-                {% endif %}
-            </td>
-        </tr>
+  <thead>
+    <tr>
+      <th>Request ID</th>
+      <th>Item</th>
+      <th>Amount</th>
+      <th>Pay</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in requests %}
+    <tr>
+      <td>{{ r.id }}</td>
+      <td>{{ r.item }}</td>
+      <td>{{ r.amount }}</td>
+      <td>
+        <form method="POST" action="{{ url_for('finance.pay_request', req_id=r.id) }}" enctype="multipart/form-data">
+          <input type="number" step="0.01" name="amount" placeholder="Amount" required>
+          <input type="file" name="receipt">
+          <button class="btn btn-sm btn-success">Pay</button>
+        </form>
+      </td>
+    </tr>
     {% endfor %}
-    </tbody>
+  </tbody>
 </table>
+
+<h4 class="mt-4">Payment History</h4>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Request</th>
+      <th>Amount</th>
+      <th>Paid By</th>
+      <th>Receipt</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in payments %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td>{{ p.procurement_request_id }}</td>
+      <td>{{ p.amount }}</td>
+      <td>{{ p.paid_by }}</td>
+      <td>
+        {% if p.receipt_path %}
+          <a href="{{ url_for('finance.view_receipt', filename=p.receipt_path) }}" target="_blank">View</a>
+        {% else %}
+          -
+        {% endif %}
+      </td>
+      <td>{{ p.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}

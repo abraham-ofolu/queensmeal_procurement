@@ -1,27 +1,24 @@
 from datetime import datetime
-from app.extensions import db
+from ..extensions import db
 
 class ProcurementQuotation(db.Model):
     __tablename__ = "procurement_quotations"
 
     id = db.Column(db.Integer, primary_key=True)
 
-    procurement_id = db.Column(
+    procurement_request_id = db.Column(
         db.Integer,
-        db.ForeignKey("procurement_requests.id"),
-        nullable=False
+        db.ForeignKey("procurement_requests.id", ondelete="CASCADE"),
+        nullable=False,
     )
 
     filename = db.Column(db.String(255), nullable=False)
+    uploaded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    uploaded_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow,
-        nullable=False
-    )
-
-    # 🔑 THIS WAS MISSING — NOW FIXED
-    procurement = db.relationship(
+    request = db.relationship(
         "ProcurementRequest",
-        back_populates="quotations"
+        back_populates="quotations",
     )
+
+    def __repr__(self):
+        return f"<ProcurementQuotation {self.id} {self.filename}>"
