@@ -20,6 +20,7 @@
     <tbody>
     {% for req in requests %}
         <tr>
+            <td>{{ req.id }}</td>
             <td>{{ req.title }}</td>
             <td>{{ req.amount }}</td>
             <td>{{ req.vendor.name if req.vendor else "N/A" }}</td>
@@ -49,6 +50,17 @@
                     </button>
                 </form>
             </td>
+            <td>
+    {% if req.quotation_file %}
+        <a href="{{ url_for('procurement.view_quotation', filename=req.quotation_file) }}"
+           target="_blank">
+            View Quotation
+        </a>
+    {% else %}
+        No quotation
+    {% endif %}
+</td>
+
         </tr>
     {% endfor %}
     </tbody>
