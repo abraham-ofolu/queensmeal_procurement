@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Procurement Requests</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Procurement Requests</h2>
+  {% if current_user.role|lower == 'procurement' %}
+    <a href="{{ url_for('procurement.create') }}" class="btn btn-primary">Create Request</a>
+  {% endif %}
+</div>
 
-<a href="{{ url_for('procurement.create') }}" class="btn btn-primary mb-3">Create Request</a>
-
-<table class="table table-bordered">
+<table class="table table-striped">
   <thead>
     <tr>
       <th>ID</th>
@@ -14,22 +17,22 @@
       <th>Amount</th>
       <th>Status</th>
       <th>Quotation</th>
-      <th>Upload Quotation</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody>
-    {% for req in requests %}
+  {% for req in requests %}
     <tr>
       <td>{{ req.id }}</td>
       <td>{{ req.item }}</td>
       <td>{{ req.quantity }}</td>
-      <td>{{ req.amount }}</td>
+      <td>{{ "{:,.2f}".format(req.amount or 0) }}</td>
       <td>{{ req.status }}</td>
 
       <td>
         {% if req.quotation_file %}
           <a href="{{ url_for('procurement.view_quotation', filename=req.quotation_file) }}" target="_blank">
-            View
+            View File
           </a>
         {% else %}
           -
@@ -37,13 +40,17 @@
       </td>
 
       <td>
-        <form method="POST" action="{{ url_for('procurement.upload_quotation', req_id=req.id) }}" enctype="multipart/form-data">
-          <input type="file" name="quotation" required>
-          <button type="submit" class="btn btn-sm btn-success">Upload</button>
-        </form>
+        {% if current_user.role|lower == 'procurement' and (req.status|lower == 'pending') %}
+          <form action="{{ url_for('procurement.upload_quotation', req_id=req.id) }}" method="POST" enctype="multipart/form-data" style="display:flex; gap:8px; align-items:center;">
+            <input type="file" name="quotation" required>
+            <button type="submit" class="btn btn-sm btn-success">Upload Quotation</button>
+          </form>
+        {% else %}
+          -
+        {% endif %}
       </td>
     </tr>
-    {% endfor %}
+  {% endfor %}
   </tbody>
 </table>
 
