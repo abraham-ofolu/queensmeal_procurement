@@ -2,15 +2,14 @@ from datetime import datetime
 from app.extensions import db
 
 
-class ApprovalAction(db.Model):
-    __tablename__ = "approval_actions"
+class Approval(db.Model):
+    __tablename__ = "approvals"
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
 
-    request_id = db.Column(
+    procurement_id = db.Column(
         db.Integer,
-        db.ForeignKey("procurement_requests.id"),
         nullable=False,
         index=True
     )
@@ -23,7 +22,7 @@ class ApprovalAction(db.Model):
     action = db.Column(
         db.String(50),
         nullable=False
-    )
+    )  # approved / rejected
 
     created_at = db.Column(
         db.DateTime,
