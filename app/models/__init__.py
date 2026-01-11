@@ -2,7 +2,7 @@ from .user import User
 from .vendor import Vendor
 from .procurement_request import ProcurementRequest
 from .procurement_quotation import ProcurementQuotation
-from .approval import Approval
+from .approval import ApprovalAction
 from .payment import Payment
 from .document import Document
 from .audit import Audit
