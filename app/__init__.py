@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from flask_login import LoginManager
 from app.extensions import db
@@ -8,10 +9,15 @@ def create_app():
     app = Flask(__name__)
 
     # =========================
-    # Core Config
+    # Core Config (RENDER SAFE)
     # =========================
-    app.config["SECRET_KEY"] = app.config.get("SECRET_KEY", "change-me")
-    app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get("DATABASE_URL")
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me")
+
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL environment variable is not set")
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # =========================
@@ -24,7 +30,7 @@ def create_app():
     login_manager.init_app(app)
 
     # =========================
-    # 🔑 THIS IS THE MISSING PIECE
+    # Flask-Login loader
     # =========================
     @login_manager.user_loader
     def load_user(user_id):
