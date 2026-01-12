@@ -1,6 +1,9 @@
 from flask import Flask
 from flask_login import LoginManager
 
+from app.models.user import User
+
+
 from app.config import Config
 from app.extensions import db
 
@@ -13,9 +16,13 @@ from app.routes.vendors import vendors_bp
 login_manager = LoginManager()
 login_manager.login_view = "auth.login"
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 def create_app():
     app = Flask(__name__)
+       
 
     # 🔴 THIS IS THE CRITICAL LINE YOU WERE MISSING
     app.config.from_object(Config)
