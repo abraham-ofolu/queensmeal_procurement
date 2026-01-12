@@ -1,44 +1,48 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Queensmeal Procurement</title>
 </head>
 <body>
-  <nav>
-    <a href="{{ url_for('procurement.index') }}">Procurement</a> |
-    <a href="{{ url_for('vendors.list_vendors') }}">Vendors</a> |
 
-    {% if current_user.is_authenticated and current_user.role == "DIRECTOR" %}
-<a href="{{ url_for('director.approvals') }}">Director</a>
-{% endif %}
+  <div style="padding:12px; border-bottom:1px solid #ddd; margin-bottom:16px;">
+    <strong>Queensmeal Procurement</strong>
 
-
-    {% endif %}
-
-    {% if current_user.is_authenticated and current_user.role in ["finance", "director"] %}
+    <span style="margin-left:16px;">
+      <a href="{{ url_for('procurement.index') }}">Procurement</a> |
+      <a href="{{ url_for('vendors.list_vendors') }}">Vendors</a> |
+      <a href="{{ url_for('finance.to_pay') }}">Finance</a> |
       <a href="{{ url_for('finance.payments') }}">Payments</a> |
-    {% endif %}
 
-    {% if current_user.is_authenticated %}
-      <a href="{{ url_for('auth.logout') }}">Logout</a>
-    {% else %}
-      <a href="{{ url_for('auth.login') }}">Login</a>
-    {% endif %}
-  </nav>
+      {% if current_user.is_authenticated and current_user.role == "DIRECTOR" %}
+        <a href="{{ url_for('director.approvals') }}">Director</a> |
+      {% endif %}
 
-  <hr>
+      {% if current_user.is_authenticated %}
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">Login</a>
+      {% endif %}
+    </span>
+  </div>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
-      <ul>
-        {% for message in messages %}
-          <li>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+  <div style="padding: 0 12px;">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div style="margin-bottom: 12px;">
+          {% for category, message in messages %}
+            <div style="padding:10px; border:1px solid #ddd; margin-bottom:6px;">
+              <strong>{{ category }}</strong>: {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-  {% block content %}{% endblock %}
+    {% block content %}{% endblock %}
+  </div>
+
 </body>
 </html>
