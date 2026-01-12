@@ -10,7 +10,8 @@
     <a href="{{ url_for('vendors.list_vendors') }}">Vendors</a> |
 
     {% if current_user.is_authenticated and current_user.role == "director" %}
-      <a href="{{ url_for('director.approvals') }}">Director</a> |
+      <span style="color: #999;">Director (coming soon)</span> |
+
     {% endif %}
 
     {% if current_user.is_authenticated and current_user.role in ["finance", "director"] %}
