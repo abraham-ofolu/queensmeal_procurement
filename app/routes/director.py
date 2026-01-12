@@ -1,53 +1,54 @@
-from flask import Blueprint, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash
 from flask_login import login_required, current_user
-from app.extensions import db
 from app.models.procurement_request import ProcurementRequest
-from app.models.approval import ApprovalAction
+from app.extensions import db
 
 director_bp = Blueprint("director", __name__, url_prefix="/director")
 
 
 def director_only():
-    return current_user.role == "director"
+    return current_user.is_authenticated and current_user.role == "DIRECTOR"
+
+
+@director_bp.route("/approvals")
+@login_required
+def approvals():
+    if not director_only():
+        flash("Access denied.", "danger")
+        return redirect(url_for("procurement.index"))
+
+    requests = ProcurementRequest.query.filter_by(
+        status="PROCUREMENT_APPROVED"
+    ).order_by(ProcurementRequest.created_at.desc()).all()
+
+    return render_template("director/approvals.html", requests=requests)
 
 
 @director_bp.route("/approve/<int:request_id>")
 @login_required
 def approve(request_id):
     if not director_only():
-        flash("Unauthorized", "danger")
+        flash("Access denied.", "danger")
         return redirect(url_for("procurement.index"))
 
     req = ProcurementRequest.query.get_or_404(request_id)
-    req.status = "approved"
-
-    db.session.add(ApprovalAction(
-        procurement_request_id=req.id,
-        actor=current_user.username,
-        action="approved"
-    ))
-
+    req.status = "DIRECTOR_APPROVED"
     db.session.commit()
-    flash("Request approved", "success")
-    return redirect(url_for("procurement.index"))
+
+    flash("Request approved by Director.", "success")
+    return redirect(url_for("director.approvals"))
 
 
 @director_bp.route("/reject/<int:request_id>")
 @login_required
 def reject(request_id):
     if not director_only():
-        flash("Unauthorized", "danger")
+        flash("Access denied.", "danger")
         return redirect(url_for("procurement.index"))
 
     req = ProcurementRequest.query.get_or_404(request_id)
-    req.status = "rejected"
-
-    db.session.add(ApprovalAction(
-        procurement_request_id=req.id,
-        actor=current_user.username,
-        action="rejected"
-    ))
-
+    req.status = "REJECTED"
     db.session.commit()
-    flash("Request rejected", "warning")
-    return redirect(url_for("procurement.index"))
+
+    flash("Request rejected.", "warning")
+    return redirect(url_for("director.approvals"))

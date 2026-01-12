@@ -40,8 +40,10 @@ def create_app():
     from app.routes.procurement import procurement_bp
     from app.routes.vendors import vendors_bp
     from app.routes.finance import finance_bp
+    from app.routes.director import director_bp
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(director_bp)
     app.register_blueprint(procurement_bp, url_prefix="/procurement")
     app.register_blueprint(vendors_bp, url_prefix="/vendors")
     app.register_blueprint(finance_bp, url_prefix="/finance")

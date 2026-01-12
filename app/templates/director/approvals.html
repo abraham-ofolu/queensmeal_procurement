@@ -1,28 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h3>Director Approvals</h3>
+<h2>Director Approvals</h2>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Amount</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for req in requests %}
-        <tr>
-            <td>{{ req.title }}</td>
-            <td>₦{{ req.amount }}</td>
-            <td>
-                <a href="{{ url_for('director.approve', request_id=req.id) }}" class="btn btn-success btn-sm">Approve</a>
-                <a href="{{ url_for('director.reject', request_id=req.id) }}" class="btn btn-danger btn-sm">Reject</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+{% if requests %}
+<table border="1" cellpadding="8">
+    <tr>
+        <th>ID</th>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+
+    {% for r in requests %}
+    <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.item }}</td>
+        <td>{{ r.quantity }}</td>
+        <td>{{ r.amount }}</td>
+        <td>{{ r.status }}</td>
+        <td>
+            <a href="{{ url_for('director.approve', request_id=r.id) }}">Approve</a> |
+            <a href="{{ url_for('director.reject', request_id=r.id) }}">Reject</a>
+        </td>
+    </tr>
+    {% endfor %}
 </table>
+{% else %}
+<p>No pending approvals.</p>
+{% endif %}
 
 {% endblock %}

@@ -9,8 +9,10 @@
     <a href="{{ url_for('procurement.index') }}">Procurement</a> |
     <a href="{{ url_for('vendors.list_vendors') }}">Vendors</a> |
 
-    {% if current_user.is_authenticated and current_user.role == "director" %}
-      <span style="color: #999;">Director (coming soon)</span> |
+    {% if current_user.is_authenticated and current_user.role == "DIRECTOR" %}
+<a href="{{ url_for('director.approvals') }}">Director</a>
+{% endif %}
+
 
     {% endif %}
 
