@@ -74,6 +74,18 @@ def create_request():
         db.session.add(req_obj)
         db.session.commit()
 
+        urgent = bool(request.form.get("urgent"))
+
+
+        procurement = ProcurementRequest(
+    item=item,
+    quantity=quantity,
+    amount=amount,
+    urgent=urgent
+)
+
+
+
         flash("Request created. Upload a quotation to submit to Director.", "success")
         return redirect(url_for("procurement.index"))
 
