@@ -1,23 +1,30 @@
-from datetime import datetime
 from app.extensions import db
+from datetime import datetime
 
 
 class ProcurementRequest(db.Model):
     __tablename__ = "procurement_requests"
 
     id = db.Column(db.Integer, primary_key=True)
+
     item = db.Column(db.String(255), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
-    status = db.Column(db.String(50), default="pending")
+
+    # 🔴 URGENCY (THIS WAS MISSING)
+    urgent = db.Column(db.Boolean, default=False)
+
+    status = db.Column(
+        db.String(20),
+        default="pending",  # pending | approved | rejected | paid
+        nullable=False,
+    )
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # 🔴 THIS IS THE LINE YOU ASKED ABOUT
+    # Relationships
     quotations = db.relationship(
         "ProcurementQuotation",
         back_populates="procurement_request",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
-
-    def __repr__(self):
-        return f"<ProcurementRequest {self.item}>"
