@@ -26,6 +26,9 @@ def create_app():
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
 
+    def create_app():
+    app = Flask(__name__)
+
     # -------------------
     # USER LOADER (THIS IS WHAT WAS MISSING)
     # -------------------
@@ -47,5 +50,9 @@ def create_app():
     app.register_blueprint(procurement_bp, url_prefix="/procurement")
     app.register_blueprint(vendors_bp, url_prefix="/vendors")
     app.register_blueprint(finance_bp, url_prefix="/finance")
+
+    with app.app_context():
+        if os.environ.get("AUTO_CREATE_TABLE") == "1":
+            db.create_all()
 
     return app
