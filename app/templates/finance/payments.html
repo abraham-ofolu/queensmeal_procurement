@@ -1,37 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="mb-3">Payments</h2>
+<h2>Finance Payments</h2>
+<p><strong>Finance Approval Limit:</strong> ₦{{ limit }}</p>
 
+{% if payments %}
 <table class="table table-striped">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Request</th>
-      <th>Amount</th>
-      <th>Paid By</th>
-      <th>Receipt</th>
-      <th>Date</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for p in payments %}
-      <tr>
-        <td>{{ p.id }}</td>
-        <td>{{ p.procurement_request_id }}</td>
-        <td>{{ "{:,.2f}".format(p.amount or 0) }}</td>
-        <td>{{ p.paid_by_role }}</td>
-        <td>
-          {% if p.receipt_url %}
-            <a href="{{ p.receipt_url }}" target="_blank">View</a>
-          {% else %}
-            -
-          {% endif %}
-        </td>
-        <td>{{ p.created_at }}</td>
-      </tr>
-    {% endfor %}
-  </tbody>
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in payments %}
+        <tr class="{% if p.amount > limit %}table-warning{% endif %}">
+            <td>{{ p.item }}</td>
+            <td>₦{{ p.amount }}</td>
+            <td>
+                {% if p.amount > limit %}
+                    <span class="text-danger">Director Payment Required</span>
+                {% else %}
+                    Pending Payment
+                {% endif %}
+            </td>
+            <td>
+                {% if p.amount <= limit %}
+                <form method="POST" action="{{ url_for('finance.pay', request_id=p.id) }}">
+                    <button class="btn btn-sm btn-success">Mark as Paid</button>
+                </form>
+                {% else %}
+                    <em>Blocked</em>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
+{% else %}
+<p>No approved procurement awaiting payment.</p>
+{% endif %}
 
 {% endblock %}
