@@ -10,6 +10,14 @@
         <input type="text" name="item" class="form-control" required>
     </div>
 
+    <div>
+  <label>
+    <input type="checkbox" name="is_urgent">
+    Mark as URGENT
+  </label>
+</div>
+
+
     <div class="mb-3">
         <label class="form-label">Quantity</label>
         <input type="number" name="quantity" class="form-control" required>
@@ -27,6 +35,10 @@
             Mark as URGENT
         </label>
     </div>
+    
+    {% if req.is_urgent %}
+  <span style="color:red; font-weight:bold;">URGENT</span>
+{% endif %}
 
     <button type="submit" class="btn btn-primary">Submit Request</button>
 

@@ -30,6 +30,7 @@ def create():
 
         # 🚨 URGENCY CHECKBOX
         is_urgent = True if request.form.get("is_urgent") == "on" else False
+        is_urgent = bool(request)
 
         if not item or not quantity or not amount:
             flash("All fields are required.", "danger")
