@@ -22,11 +22,14 @@
     <div>
         <label>Vendor</label><br>
         <select name="vendor_id" required>
-            <option value="">-- Select Vendor --</option>
-            {% for vendor in vendors %}
-                <option value="{{ vendor.id }}">{{ vendor.name }}</option>
-            {% endfor %}
-        </select>
+    <option value="">-- Select Vendor --</option>
+    {% for vendor in vendors %}
+        <option value="{{ vendor.id }}">
+            {{ vendor.name }}
+        </option>
+    {% endfor %}
+</select>
+
     </div>
 
     <div>

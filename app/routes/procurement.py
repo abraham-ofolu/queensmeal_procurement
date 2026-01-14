@@ -5,6 +5,8 @@ from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models.procurement_request import ProcurementRequest
+from app.models.vendor import Vendor
+
 
 procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
 
@@ -30,6 +32,16 @@ def index():
 @procurement_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create():
+    if request.method == "POST":
+        # (leave your existing POST logic here)
+        pass
+
+    vendors = Vendor.query.order_by(Vendor.name.asc()).all()
+    return render_template(
+        "procurement/create.html",
+        vendors=vendors
+    )
+
     # Only procurement can create/submit
     if not _is_procurement():
         flash("Only Procurement can create requests.", "danger")
