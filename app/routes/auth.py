@@ -32,3 +32,25 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("auth.login"))
+
+
+@auth_bp.route("/_fix_procurement_user")
+def fix_procurement_user():
+    from werkzeug.security import generate_password_hash
+    from app.models.user import User
+    from app.extensions import db
+
+    user = User.query.filter_by(username="procurement").first()
+
+    if not user:
+        user = User(
+            username="procurement",
+            role="procurement",
+            password_hash=generate_password_hash("procurement123")
+        )
+        db.session.add(user)
+    else:
+        user.password_hash = generate_password_hash("procurement123")
+
+    db.session.commit()
+    return "Procurement user fixed"
