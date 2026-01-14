@@ -1,3 +1,4 @@
+import os
 from flask import Flask
 from app.extensions import db, migrate, login_manager
 from app.models import *  # noqa
@@ -5,9 +6,15 @@ from app.models import *  # noqa
 def create_app():
     app = Flask(__name__)
 
-    app.config["SECRET_KEY"] = app.config.get("SECRET_KEY", "dev-key")
-    app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get("SQLALCHEMY_DATABASE_URI")
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-key")
+
+    # 🔴 THIS IS THE CRITICAL LINE
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
+
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    if not app.config["SQLALCHEMY_DATABASE_URI"]:
+        raise RuntimeError("DATABASE_URL is not set")
 
     db.init_app(app)
     migrate.init_app(app, db)
