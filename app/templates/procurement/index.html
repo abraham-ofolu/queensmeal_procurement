@@ -1,59 +1,88 @@
 {% extends "base.html" %}
-{% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>Procurement Requests</h2>
-  {% if current_user.role|lower == 'procurement' %}
-    <a href="{{ url_for('procurement.create') }}" class="btn btn-primary">Create Request</a>
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div>
+    <h3 class="mb-0">Procurement Requests</h3>
+    <div class="text-muted small">Create, track, and route requests for approval and payment.</div>
+  </div>
+
+  {% if current_user.is_authenticated and (current_user.role|lower == 'procurement') %}
+    <a class="btn btn-primary" href="/procurement/create">+ Create Request</a>
   {% endif %}
 </div>
 
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Item</th>
-      <th>Qty</th>
-      <th>Amount</th>
-      <th>Status</th>
-      <th>Quotation</th>
-      <th>Action</th>
-    </tr>
-  </thead>
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 90px;">ID</th>
+            <th>Item</th>
+            <th style="width: 120px;">Qty</th>
+            <th style="width: 160px;">Amount</th>
+            <th style="width: 140px;">Status</th>
+            <th style="width: 180px;">Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if requests and requests|length > 0 %}
+            {% for r in requests %}
+              <tr>
+                <td>#{{ r.id }}</td>
+                <td>
+                  <div class="fw-semibold">
+                    {{ r.item if r.item is defined else (r.description if r.description is defined else '—') }}
+                  </div>
 
-  <tbody>
-  {% for req in requests %}
-    <tr>
-      <td>{{ req.id }}</td>
-      <td>{{ req.item }}</td>
-      <td>{{ req.quantity }}</td>
-      <td>{{ "{:,.2f}".format(req.amount or 0) }}</td>
-      <td>{{ req.status }}</td>
-
-      <td>
-        {% if req.quotation_url %}
-          <a href="{{ req.quotation_url }}" target="_blank">View File</a>
-        {% else %}
-          -
-        {% endif %}
-      </td>
-
-      <td>
-        {% if current_user.role|lower == 'procurement' and (req.status|lower == 'pending') %}
-          <form action="{{ url_for('procurement.upload_quotation', req_id=req.id) }}"
-                method="POST"
-                enctype="multipart/form-data"
-                style="display:flex; gap:8px; align-items:center;">
-            <input type="file" name="quotation" required>
-            <button type="submit" class="btn btn-sm btn-success">Upload Quotation</button>
-          </form>
-        {% else %}
-          -
-        {% endif %}
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-
+                  {# urgency badge if model supports it #}
+                  {% if (r.urgent is defined and r.urgent) or (r.is_urgent is defined and r.is_urgent) %}
+                    <span class="badge text-bg-danger mt-1">URGENT</span>
+                  {% endif %}
+                </td>
+                <td>{{ r.quantity if r.quantity is defined else '—' }}</td>
+                <td>
+                  {% if r.amount is defined %}
+                    ₦{{ "%.2f"|format(r.amount) }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+                <td>
+                  {% set st = (r.status if r.status is defined else 'pending') %}
+                  {% if st|lower == 'pending' %}
+                    <span class="badge text-bg-warning">Pending</span>
+                  {% elif st|lower == 'approved' %}
+                    <span class="badge text-bg-success">Approved</span>
+                  {% elif st|lower == 'rejected' %}
+                    <span class="badge text-bg-danger">Rejected</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">{{ st }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if r.created_at is defined and r.created_at %}
+                    {{ r.created_at.strftime("%Y-%m-%d %H:%M") }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center p-4 text-muted">
+                No requests yet.
+                {% if current_user.is_authenticated and (current_user.role|lower == 'procurement') %}
+                  Click <b>Create Request</b> to submit your first one.
+                {% endif %}
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 {% endblock %}
