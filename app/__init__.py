@@ -4,6 +4,7 @@ from app.extensions import db, migrate, login_manager
 from app.models.user import User
 
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -21,6 +22,9 @@ def create_app():
 
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    
+
+    
 
     # Init extensions
     db.init_app(app)
