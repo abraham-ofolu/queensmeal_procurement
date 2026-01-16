@@ -1,11 +1,10 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="container">
+  <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h2 class="mb-0">Procurement Requests</h2>
-      <p class="text-muted mb-0">Create, track, and route requests for approval and payment.</p>
+      <div class="text-muted">Create, track, and route requests for approval and payment.</div>
     </div>
 
     {% if current_user.is_authenticated and (current_user.role|lower) == "procurement" %}
@@ -13,46 +12,42 @@
     {% endif %}
   </div>
 
-  {% if requests and requests|length > 0 %}
+  {% if requests|length == 0 %}
+    <div class="alert alert-info">
+      No requests yet. Click <b>Create Request</b> to submit your first one.
+    </div>
+  {% else %}
     <div class="table-responsive">
       <table class="table table-striped align-middle">
         <thead>
           <tr>
             <th>ID</th>
             <th>Item</th>
+            <th>Description</th>
+            <th>Vendor</th>
             <th>Qty</th>
             <th>Amount</th>
-            <th>Vendor</th>
             <th>Urgent</th>
             <th>Status</th>
             <th>Created</th>
           </tr>
         </thead>
         <tbody>
-          {% for req in requests %}
+          {% for r in requests %}
             <tr>
-              <td>{{ req.id }}</td>
-              <td>{{ req.item }}</td>
-              <td>{{ req.quantity }}</td>
-              <td>{{ req.amount }}</td>
-              <td>{{ req.vendor.name if req.vendor else "-" }}</td>
-              <td>
-                {% if req.is_urgent %}
-                  <span class="badge bg-danger">YES</span>
-                {% else %}
-                  <span class="badge bg-secondary">NO</span>
-                {% endif %}
-              </td>
-              <td>{{ req.status }}</td>
-              <td>{{ req.created_at.strftime('%Y-%m-%d %H:%M') if req.created_at else "" }}</td>
+              <td>{{ r.id }}</td>
+              <td>{{ r.item }}</td>
+              <td style="max-width: 320px; white-space: normal;">{{ r.description or "" }}</td>
+              <td>{{ r.vendor.name if r.vendor else "" }}</td>
+              <td>{{ r.quantity }}</td>
+              <td>{{ r.amount }}</td>
+              <td>{% if r.is_urgent %}✅{% else %}—{% endif %}</td>
+              <td>{{ r.status }}</td>
+              <td>{{ r.created_at }}</td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
-    </div>
-  {% else %}
-    <div class="alert alert-info">
-      No requests yet. Click <strong>Create Request</strong> to submit your first one.
     </div>
   {% endif %}
 </div>

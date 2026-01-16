@@ -8,6 +8,10 @@ class ProcurementRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     item = db.Column(db.String(255), nullable=False)
+
+    # ✅ restored
+    description = db.Column(db.Text, nullable=True)
+
     quantity = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
 
@@ -21,7 +25,7 @@ class ProcurementRequest(db.Model):
         nullable=False
     )
 
-    # 🔗 Vendor (Director MUST see this)
+    # 🔗 Vendor
     vendor_id = db.Column(
         db.Integer,
         db.ForeignKey("vendors.id"),

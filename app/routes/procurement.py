@@ -47,17 +47,19 @@ def create():
 
     if request.method == "POST":
         item = (request.form.get("item") or "").strip()
+        description = (request.form.get("description") or "").strip() or None
         quantity = request.form.get("quantity")
         amount = request.form.get("amount")
         vendor_id = request.form.get("vendor_id")
         is_urgent = request.form.get("is_urgent") == "on"
 
         if not item or not quantity or not amount or not vendor_id:
-            flash("All fields except quotation are required.", "danger")
+            flash("Item, Quantity, Amount, and Vendor are required.", "danger")
             return redirect(url_for("procurement.create"))
 
         new_request = ProcurementRequest(
             item=item,
+            description=description,  # ✅ restored
             quantity=int(quantity),
             amount=float(amount),
             vendor_id=int(vendor_id),
@@ -67,14 +69,14 @@ def create():
         )
 
         db.session.add(new_request)
-        db.session.flush()  # 👈 ensures ID exists
+        db.session.flush()  # ensure ID exists
 
-        # 📎 HANDLE QUOTATION
+        # 📎 Handle quotation upload
         quotation_file = request.files.get("quotation")
 
         if quotation_file and quotation_file.filename:
             if not CLOUDINARY_OK:
-                flash("Quotation upload unavailable.", "warning")
+                flash("Quotation upload unavailable (Cloudinary not configured).", "warning")
             else:
                 try:
                     upload = cloudinary.uploader.upload(
@@ -82,13 +84,11 @@ def create():
                         resource_type="auto",
                         folder="queensmeal/procurement/quotations"
                     )
-
                     quotation = ProcurementQuotation(
                         procurement_request_id=new_request.id,
                         file_path=upload["secure_url"]
                     )
                     db.session.add(quotation)
-
                 except Exception as e:
                     db.session.rollback()
                     flash(f"Quotation upload failed: {e}", "danger")
