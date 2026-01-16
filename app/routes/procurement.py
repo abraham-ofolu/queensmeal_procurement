@@ -7,23 +7,16 @@ from app.extensions import db
 from app.models.procurement_request import ProcurementRequest
 from app.models.vendor import Vendor
 
-# Optional: Cloudinary quotation upload (won't break app if Cloudinary isn't installed)
-try:
-    import cloudinary.uploader
-    CLOUDINARY_OK = True
-except Exception:
-    CLOUDINARY_OK = False
-
-
 procurement_bp = Blueprint("procurement", __name__, url_prefix="/procurement")
 
 
-def _role():
-    return (getattr(current_user, "role", "") or "").lower()
+def _role() -> str:
+    return (getattr(current_user, "role", "") or "").strip().lower()
 
 
-def _require_role(*roles):
-    if _role() not in [r.lower() for r in roles]:
+def _require_role(*roles: str) -> bool:
+    allowed = [r.lower() for r in roles]
+    if _role() not in allowed:
         flash("You are not allowed to access that page.", "danger")
         return False
     return True
@@ -32,7 +25,7 @@ def _require_role(*roles):
 @procurement_bp.route("/")
 @login_required
 def index():
-    # Everyone logged-in can view the list; actions will be restricted elsewhere
+    # Everyone logged-in can view list (actions restricted elsewhere)
     requests_qs = ProcurementRequest.query.order_by(ProcurementRequest.created_at.desc()).all()
     return render_template("procurement/index.html", requests=requests_qs)
 
@@ -40,61 +33,51 @@ def index():
 @procurement_bp.route("/create", methods=["GET", "POST"])
 @login_required
 def create():
-    # Only procurement should create requests
+    # Only procurement can create
     if not _require_role("procurement"):
         return redirect(url_for("procurement.index"))
 
-    if request.method == "POST":
-        item = (request.form.get("item") or "").strip()
-        quantity = request.form.get("quantity")
-        amount = request.form.get("amount")
-        vendor_id = request.form.get("vendor_id")
-        is_urgent = True if request.form.get("is_urgent") == "on" else False
+    vendors = Vendor.query.order_by(Vendor.name.asc()).all()
 
-        # quotation file is optional
-        quotation_file = request.files.get("quotation")
+    if request.method == "GET":
+        return render_template("procurement/create.html", vendors=vendors)
 
-        if not item or not quantity or not amount or not vendor_id:
-            flash("Item, Quantity, Amount, and Vendor are required.", "danger")
-            return redirect(url_for("procurement.create"))
+    # POST
+    item = (request.form.get("item") or "").strip()
+    quantity_raw = (request.form.get("quantity") or "").strip()
+    amount_raw = (request.form.get("amount") or "").strip()
+    vendor_id_raw = (request.form.get("vendor_id") or "").strip()
+    is_urgent = True if request.form.get("is_urgent") == "on" else False
 
-        quotation_url = None
-        if quotation_file and quotation_file.filename:
-            if not CLOUDINARY_OK:
-                flash("Quotation upload is not available right now (Cloudinary not configured).", "warning")
-            else:
-                try:
-                    res = cloudinary.uploader.upload(
-                        quotation_file,
-                        resource_type="auto",
-                        folder="queensmeal/procurement/quotations"
-                    )
-                    quotation_url = res.get("secure_url")
-                except Exception as e:
-                    flash(f"Quotation upload failed: {e}", "danger")
-                    return redirect(url_for("procurement.create"))
+    if not item or not quantity_raw or not amount_raw or not vendor_id_raw:
+        flash("Item, Quantity, Amount, and Vendor are required.", "danger")
+        return redirect(url_for("procurement.create"))
 
-        try:
-            new_request = ProcurementRequest(
-                item=item,
-                quantity=int(quantity),
-                amount=float(amount),
-                vendor_id=int(vendor_id),
-                is_urgent=is_urgent,
-                quotation_url=quotation_url,
-                status="pending",
-                created_by=getattr(current_user, "id", None),
-                created_at=datetime.utcnow(),
-            )
-            db.session.add(new_request)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Could not save request: {e}", "danger")
-            return redirect(url_for("procurement.create"))
+    try:
+        quantity = int(quantity_raw)
+        amount = float(amount_raw)
+        vendor_id = int(vendor_id_raw)
+    except Exception:
+        flash("Quantity must be a number, Amount must be a number, Vendor must be selected.", "danger")
+        return redirect(url_for("procurement.create"))
 
+    # IMPORTANT: use only fields that exist in your ProcurementRequest model
+    new_request = ProcurementRequest(
+        item=item,
+        quantity=quantity,
+        amount=amount,
+        vendor_id=vendor_id,
+        is_urgent=is_urgent,
+        status="pending",
+        created_at=datetime.utcnow(),
+    )
+
+    try:
+        db.session.add(new_request)
+        db.session.commit()
         flash("Request submitted successfully.", "success")
         return redirect(url_for("procurement.index"))
-
-    vendors = Vendor.query.order_by(Vendor.name.asc()).all()
-    return render_template("procurement/create.html", vendors=vendors)
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Could not save request: {e}", "danger")
+        return redirect(url_for("procurement.create"))
