@@ -15,23 +15,34 @@ class ProcurementRequest(db.Model):
 
     status = db.Column(db.String(50), default="pending", nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
 
-    # Vendor
-    vendor_id = db.Column(db.Integer, db.ForeignKey("vendors.id"), nullable=True)
+    # 🔗 Vendor (Director MUST see this)
+    vendor_id = db.Column(
+        db.Integer,
+        db.ForeignKey("vendors.id"),
+        nullable=False
+    )
 
-    vendor = db.relationship("Vendor", back_populates="procurement_requests")
+    vendor = db.relationship(
+        "Vendor",
+        back_populates="procurement_requests"
+    )
 
-    # Quotations
+    # 🔗 Quotations
     quotations = db.relationship(
         "ProcurementQuotation",
         back_populates="procurement_request",
-        cascade="all, delete-orphan",
+        cascade="all, delete-orphan"
     )
 
-    # Payments
+    # 🔗 Payments
     payments = db.relationship(
         "Payment",
         back_populates="procurement_request",
-        cascade="all, delete-orphan",
+        cascade="all, delete-orphan"
     )

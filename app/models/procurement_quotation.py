@@ -10,15 +10,18 @@ class ProcurementQuotation(db.Model):
     procurement_request_id = db.Column(
         db.Integer,
         db.ForeignKey("procurement_requests.id"),
-        nullable=False,
+        nullable=False
     )
 
-    # Can be a local /static/... url OR Cloudinary url
-    file_path = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
 
     procurement_request = db.relationship(
         "ProcurementRequest",
-        back_populates="quotations",
+        back_populates="quotations"
     )
