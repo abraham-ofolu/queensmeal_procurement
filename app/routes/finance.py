@@ -1,41 +1,66 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
-from flask_login import login_required
+import os
+from decimal import Decimal
+
+from flask import Blueprint, render_template, redirect, url_for, flash
+from flask_login import login_required, current_user
+
 from app.extensions import db
 from app.models.procurement_request import ProcurementRequest
 
 finance_bp = Blueprint("finance", __name__, url_prefix="/finance")
 
-FINANCE_LIMIT = 500000
+
+def _role() -> str:
+    return (getattr(current_user, "role", "") or "").lower()
 
 
-@finance_bp.route("/payments")
+def _pay_limit() -> Decimal:
+    # You can set FINANCE_PAY_LIMIT on Render env vars (example: 500000)
+    raw = os.getenv("FINANCE_PAY_LIMIT", "500000")
+    try:
+        return Decimal(raw)
+    except Exception:
+        return Decimal("500000")
+
+
+@finance_bp.route("/payments", methods=["GET"])
 @login_required
 def payments():
-    payments_list = (
-        ProcurementRequest.query
-        .filter_by(status="approved")
+    if _role() not in {"finance", "director"}:
+        flash("Only Finance/Director can access payments.", "danger")
+        return redirect(url_for("procurement.index"))
+
+    approved = (
+        ProcurementRequest.query.filter_by(status="approved")
         .order_by(ProcurementRequest.created_at.desc())
         .all()
     )
-    return render_template(
-        "finance/payments.html",
-        payments=payments_list,
-        limit=FINANCE_LIMIT
-    )
+    return render_template("finance/payments.html", requests=approved, pay_limit=_pay_limit())
 
 
-@finance_bp.route("/pay/<int:request_id>", methods=["POST"])
+@finance_bp.route("/mark-paid/<int:req_id>", methods=["POST"])
 @login_required
-def pay(request_id):
-    req = ProcurementRequest.query.get_or_404(request_id)
-
-    if req.amount > FINANCE_LIMIT:
-        flash("Amount exceeds Finance limit. Director payment required.", "danger")
+def mark_paid(req_id: int):
+    if _role() not in {"finance", "director"}:
+        flash("Not allowed.", "danger")
         return redirect(url_for("finance.payments"))
-    
 
+    pr = ProcurementRequest.query.get_or_404(req_id)
 
-    req.status = "paid"
+    if pr.status != "approved":
+        flash("Only approved requests can be paid.", "warning")
+        return redirect(url_for("finance.payments"))
+
+    limit = _pay_limit()
+
+    # Rules:
+    # - If amount <= limit: Finance can pay
+    # - If amount > limit: ONLY Director can pay
+    if pr.amount is not None and pr.amount > limit and _role() != "director":
+        flash(f"Over limit. Only Director can mark as paid. (Limit: {limit})", "danger")
+        return redirect(url_for("finance.payments"))
+
+    pr.status = "paid"
     db.session.commit()
-    flash("Payment completed successfully.", "success")
+    flash("Marked as paid.", "success")
     return redirect(url_for("finance.payments"))

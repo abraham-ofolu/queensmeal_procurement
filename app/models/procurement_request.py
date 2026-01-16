@@ -17,28 +17,21 @@ class ProcurementRequest(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # 🔗 Vendor
-    vendor_id = db.Column(
-        db.Integer,
-        db.ForeignKey("vendors.id"),
-        nullable=True
-    )
+    # Vendor
+    vendor_id = db.Column(db.Integer, db.ForeignKey("vendors.id"), nullable=True)
 
-    vendor = db.relationship(
-        "Vendor",
-        back_populates="procurement_requests"
-    )
+    vendor = db.relationship("Vendor", back_populates="procurement_requests")
 
-    # 🔗 Quotations
+    # Quotations
     quotations = db.relationship(
         "ProcurementQuotation",
         back_populates="procurement_request",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
-    # 🔗 Payments
+    # Payments
     payments = db.relationship(
         "Payment",
         back_populates="procurement_request",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )

@@ -8,6 +8,7 @@ class Vendor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     name = db.Column(db.String(255), nullable=False)
+
     phone = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(255), nullable=True)
 
@@ -17,8 +18,8 @@ class Vendor(db.Model):
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
-    # 🔗 Procurement Requests (THIS FIXES THE LOGIN CRASH)
     procurement_requests = db.relationship(
         "ProcurementRequest",
-        back_populates="vendor"
+        back_populates="vendor",
+        cascade="all, delete-orphan",
     )
