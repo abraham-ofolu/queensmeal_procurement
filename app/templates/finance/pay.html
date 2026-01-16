@@ -1,22 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2 class="mb-3">Finance Payment</h2>
+<h2>
+  {% if payer_role == "director" %}
+    Director Payment
+  {% else %}
+    Finance Payment
+  {% endif %}
+</h2>
 
-<div class="card p-3 mb-3">
-  <p><b>Request ID:</b> {{ req.id }}</p>
-  <p><b>Item:</b> {{ req.item }}</p>
-  <p><b>Amount:</b> {{ "{:,.2f}".format(req.amount or 0) }}</p>
-  <p><b>Finance Limit:</b> {{ "{:,.2f}".format(limit) }}</p>
-</div>
+<p>
+  Paying Request <strong>#{{ req.id }}</strong> — {{ req.item }} (Qty: {{ req.quantity }})
+</p>
+
+{% if req.vendor %}
+  <div style="padding:10px; border:1px solid #ddd; margin-bottom: 12px;">
+    <strong>Vendor Details</strong><br>
+    Name: {{ req.vendor.name }}<br>
+    {% if req.vendor.phone %}Phone: {{ req.vendor.phone }}<br>{% endif %}
+    {% if req.vendor.email %}Email: {{ req.vendor.email }}<br>{% endif %}
+    {% if req.vendor.bank_name %}Bank: {{ req.vendor.bank_name }}<br>{% endif %}
+    {% if req.vendor.account_name %}Account Name: {{ req.vendor.account_name }}<br>{% endif %}
+    {% if req.vendor.account_number %}Account Number: {{ req.vendor.account_number }}<br>{% endif %}
+  </div>
+{% endif %}
+
+{% if req.quotations and req.quotations|length > 0 %}
+  <p>
+    <strong>Quotation:</strong>
+    <a href="{{ req.quotations[-1].file_path }}" target="_blank">View latest quotation</a>
+  </p>
+{% endif %}
 
 <form method="POST" enctype="multipart/form-data">
   <div class="mb-3">
-    <label class="form-label">Upload Receipt</label>
-    <input class="form-control" type="file" name="receipt" required>
+    <label class="form-label">Amount Paid</label>
+    <input class="form-control" name="amount_paid" value="{{ req.amount }}" />
+    {% if payer_role != "director" and limit %}
+      <small class="text-muted">Finance Limit: {{ limit }}</small>
+    {% endif %}
   </div>
-  <button class="btn btn-success" type="submit">Confirm Paid</button>
-  <a class="btn btn-secondary" href="{{ url_for('finance.to_pay') }}">Back</a>
+
+  <div class="mb-3">
+    <label class="form-label">Upload Receipt (optional)</label>
+    <input class="form-control" type="file" name="receipt" />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Notes (optional)</label>
+    <textarea class="form-control" name="notes" rows="3"></textarea>
+  </div>
+
+  <button class="btn btn-success" type="submit">Save Payment</button>
+  <a class="btn btn-secondary" href="{% if payer_role == 'director' %}{{ url_for('director.approvals') }}{% else %}{{ url_for('finance.payments') }}{% endif %}">Back</a>
 </form>
 
 {% endblock %}

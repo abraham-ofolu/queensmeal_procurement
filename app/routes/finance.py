@@ -1,6 +1,6 @@
 import os
-from decimal import Decimal, InvalidOperation
 from datetime import datetime
+from decimal import Decimal
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
@@ -20,100 +20,146 @@ except Exception:
 finance_bp = Blueprint("finance", __name__, url_prefix="/finance")
 
 
-def _role():
+def _role() -> str:
     return (getattr(current_user, "role", "") or "").lower()
 
 
-def _finance_limit():
-    # You can set this in Render ENV as FINANCE_PAYMENT_LIMIT (example: 500000)
-    raw = os.getenv("FINANCE_PAYMENT_LIMIT", "500000")
+def _require_role(*roles) -> bool:
+    if _role() not in [r.lower() for r in roles]:
+        flash("You are not allowed to access that page.", "danger")
+        return False
+    return True
+
+
+def _finance_limit() -> Decimal:
+    # Set this on Render as env var if you want:
+    # FINANCE_PAYMENT_LIMIT=200000
+    raw = os.environ.get("FINANCE_PAYMENT_LIMIT", "200000")
     try:
-        return Decimal(raw)
+        return Decimal(str(raw).replace(",", "").strip())
     except Exception:
-        return Decimal("500000")
+        return Decimal("200000")
 
 
-@finance_bp.route("/payments", methods=["GET"])
+@finance_bp.route("/payments")
 @login_required
 def payments():
-    if _role() != "finance":
-        flash("Access denied.", "danger")
+    if not _require_role("finance"):
         return redirect(url_for("procurement.index"))
 
-    approved = ProcurementRequest.query.filter(
-        ProcurementRequest.status == "approved"
-    ).order_by(ProcurementRequest.created_at.desc()).all()
+    limit = _finance_limit()
+
+    # Show APPROVED requests that are NOT PAID and within finance limit
+    payable_requests = (
+        ProcurementRequest.query
+        .filter(ProcurementRequest.status == "approved")
+        .order_by(ProcurementRequest.created_at.desc())
+        .all()
+    )
+
+    payable_requests = [r for r in payable_requests if (r.amount or 0) <= limit]
+
+    # Recent payments list
+    recent_payments = (
+        Payment.query
+        .order_by(Payment.paid_at.desc().nullslast(), Payment.created_at.desc())
+        .limit(50)
+        .all()
+    )
 
     return render_template(
         "finance/payments.html",
-        requests=approved,
-        finance_limit=_finance_limit()
+        payable_requests=payable_requests,
+        recent_payments=recent_payments,
+        limit=limit
     )
 
 
-@finance_bp.route("/pay/<int:request_id>", methods=["POST"])
+@finance_bp.route("/pay/<int:request_id>", methods=["GET", "POST"])
 @login_required
-def pay(request_id):
-    if _role() != "finance":
-        flash("Access denied.", "danger")
+def pay(request_id: int):
+    if not _require_role("finance"):
         return redirect(url_for("procurement.index"))
 
     req = ProcurementRequest.query.get_or_404(request_id)
+    limit = _finance_limit()
 
+    # Only approved can be paid
     if req.status != "approved":
-        flash("Only APPROVED requests can be paid.", "danger")
+        flash("Only APPROVED requests can be paid.", "warning")
         return redirect(url_for("finance.payments"))
 
-    # enforce finance limit
-    try:
-        req_amount = Decimal(str(req.amount))
-    except Exception:
-        flash("Invalid request amount.", "danger")
+    # Finance limit enforcement
+    if (req.amount or 0) > limit:
+        flash("This request is above Finance limit. Director must pay.", "danger")
         return redirect(url_for("finance.payments"))
 
-    if req_amount > _finance_limit():
-        flash("This request is ABOVE Finance limit. Director must pay.", "warning")
-        return redirect(url_for("finance.payments"))
+    if request.method == "POST":
+        # default pay amount = request amount
+        amount_paid = Payment.normalize_amount(request.form.get("amount_paid") or req.amount)
+        notes = (request.form.get("notes") or "").strip() or None
+        receipt_file = request.files.get("receipt")
 
-    receipt_file = request.files.get("receipt")
-    notes = (request.form.get("notes") or "").strip() or None
+        receipt_url = None
+        receipt_public_id = None
+        receipt_uploaded_at = None
 
-    receipt_url = None
-    if receipt_file and receipt_file.filename:
-        if not CLOUDINARY_OK:
-            flash("Receipt upload not available (Cloudinary not configured).", "warning")
-        else:
-            try:
-                res = cloudinary.uploader.upload(
-                    receipt_file,
-                    resource_type="auto",
-                    folder="queensmeal/procurement/receipts"
-                )
-                receipt_url = res.get("secure_url")
-            except Exception as e:
-                flash(f"Receipt upload failed: {e}", "danger")
-                return redirect(url_for("finance.payments"))
+        if receipt_file and receipt_file.filename:
+            if not CLOUDINARY_OK:
+                flash("Receipt upload not available (Cloudinary not configured).", "warning")
+            else:
+                try:
+                    res = cloudinary.uploader.upload(
+                        receipt_file,
+                        resource_type="auto",
+                        folder="queensmeal/procurement/receipts"
+                    )
+                    receipt_url = res.get("secure_url")
+                    receipt_public_id = res.get("public_id")
+                    receipt_uploaded_at = datetime.utcnow()
+                except Exception as e:
+                    flash(f"Receipt upload failed: {e}", "danger")
+                    return redirect(url_for("finance.pay", request_id=req.id))
 
-    try:
-        payment = Payment(
-            procurement_request_id=req.id,
-            amount_paid=req_amount,
-            paid_by_user_id=getattr(current_user, "id", None),
-            paid_by_role="finance",
-            receipt_url=receipt_url,
-            receipt_uploaded_at=datetime.utcnow() if receipt_url else None,
-            notes=notes,
-            paid_at=datetime.utcnow(),
-        )
-        db.session.add(payment)
+        # Create payment record
+        try:
+            payer_name = getattr(current_user, "username", None) or getattr(current_user, "name", None) or "finance"
+            payment = Payment(
+                procurement_request_id=req.id,
 
-        # Mark request as PAID
-        req.status = "paid"
+                # Your DB requires `amount` NOT NULL
+                amount=amount_paid,
 
-        db.session.commit()
-        flash("Payment recorded and request marked as PAID.", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Could not save payment: {e}", "danger")
+                # Keep also `amount_paid` for the newer design
+                amount_paid=amount_paid,
 
-    return redirect(url_for("finance.payments"))
+                paid_by_role="finance",
+                paid_by_name=str(payer_name),
+
+                paid_by_user_id=getattr(current_user, "id", None),
+
+                receipt_url=receipt_url,
+                receipt_public_id=receipt_public_id,
+                receipt_uploaded_at=receipt_uploaded_at,
+
+                notes=notes,
+                status="paid",
+                paid_at=datetime.utcnow(),
+                created_at=datetime.utcnow(),
+            )
+
+            db.session.add(payment)
+
+            # Update request status
+            req.status = "paid"
+            db.session.commit()
+
+            flash("Payment saved successfully.", "success")
+            return redirect(url_for("finance.payments"))
+
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Could not save payment: {e}", "danger")
+            return redirect(url_for("finance.pay", request_id=req.id))
+
+    return render_template("finance/pay.html", req=req, limit=limit, payer_role="finance")
