@@ -9,24 +9,44 @@ class ProcurementRequest(db.Model):
 
     item = db.Column(db.String(255), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    amount = db.Column(db.Float, nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
 
-    # URGENCY
-    is_urgent = db.Column(db.Boolean, nullable=False, default=False)
+    is_urgent = db.Column(db.Boolean, default=False, nullable=False)
 
-    # LINK TO VENDOR (THIS FIXES YOUR ERROR)
-    vendor_id = db.Column(db.Integer, db.ForeignKey("vendors.id"), nullable=True)
+    status = db.Column(
+        db.String(50),
+        default="pending",
+        nullable=False
+    )
 
-    # Optional quotation URL (Cloudinary link or file link)
-    quotation_url = db.Column(db.Text, nullable=True)
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow,
+        nullable=False
+    )
 
-    # Workflow status
-    # pending -> approved -> paid
-    # pending -> rejected
-    status = db.Column(db.String(20), nullable=False, default="pending")
+    # 🔗 Vendor
+    vendor_id = db.Column(
+        db.Integer,
+        db.ForeignKey("vendors.id"),
+        nullable=True
+    )
 
-    created_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    vendor = db.relationship(
+        "Vendor",
+        back_populates="procurement_requests"
+    )
 
-    # Relationships (safe even if you don’t use them in templates yet)
-    vendor = db.relationship("Vendor", backref=db.backref("procurement_requests", lazy=True))
+    # 🔗 Quotations (THIS IS WHAT WAS MISSING)
+    quotations = db.relationship(
+        "ProcurementQuotation",
+        back_populates="procurement_request",
+        cascade="all, delete-orphan"
+    )
+
+    # 🔗 Payments
+    payments = db.relationship(
+        "Payment",
+        back_populates="procurement_request",
+        cascade="all, delete-orphan"
+    )
