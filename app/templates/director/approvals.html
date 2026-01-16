@@ -1,48 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Director Approvals</h2>
+<h2>Director - Approvals & Payments</h2>
+<p>Finance Limit: <strong>{{ finance_limit }}</strong> (Director pays above this)</p>
 
 {% if requests %}
 <table border="1" cellpadding="6" cellspacing="0">
-    <tr>
-        <th>Item</th>
-        <th>Description</th>
-        <th>Qty</th>
-        <th>Amount</th>
-        <th>Vendor</th>
-        <th>Quotation</th>
-        <th>Action</th>
-    </tr>
+  <tr>
+    <th>ID</th>
+    <th>Item</th>
+    <th>Description</th>
+    <th>Qty</th>
+    <th>Amount</th>
+    <th>Status</th>
+    <th>Vendor</th>
+    <th>Quotation</th>
+    <th>Actions</th>
+  </tr>
 
-    {% for r in requests %}
-    <tr>
-        <td>{{ r.item }}</td>
-        <td>{{ r.description }}</td>
-        <td>{{ r.quantity }}</td>
-        <td>{{ r.amount }}</td>
-        <td>
-            {{ r.vendor.name }}<br>
-            {{ r.vendor.bank_name }}<br>
-            {{ r.vendor.account_name }}<br>
-            {{ r.vendor.account_number }}
-        </td>
-        <td>
-            {% if r.quotations %}
-                <a href="{{ r.quotations[0].file_path }}" target="_blank">View</a>
-            {% else %}
-                —
-            {% endif %}
-        </td>
-        <td>
-            <a href="{{ url_for('director.approve', request_id=r.id) }}">Approve</a> |
-            <a href="{{ url_for('director.reject', request_id=r.id) }}">Reject</a>
-        </td>
-    </tr>
-    {% endfor %}
+  {% for r in requests %}
+  <tr>
+    <td>{{ r.id }}</td>
+    <td>{{ r.item }}</td>
+    <td>{{ r.description }}</td>
+    <td>{{ r.quantity }}</td>
+    <td>{{ r.amount }}</td>
+    <td>{{ r.status }}</td>
+    <td>
+      {% if r.vendor %}
+        {{ r.vendor.name }}<br>
+        {{ r.vendor.bank_name }}<br>
+        {{ r.vendor.account_name }}<br>
+        {{ r.vendor.account_number }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td>
+      {% if r.quotations and r.quotations|length > 0 %}
+        <a href="{{ r.quotations[0].file_path }}" target="_blank">View</a>
+      {% else %}
+        —
+      {% endif %}
+    </td>
+
+    <td>
+      {% if r.status == "pending" %}
+        <a href="{{ url_for('director.approve', request_id=r.id) }}">Approve</a> |
+        <a href="{{ url_for('director.reject', request_id=r.id) }}">Reject</a>
+      {% elif r.status == "approved" %}
+        <form method="POST" action="{{ url_for('director.pay', request_id=r.id) }}" enctype="multipart/form-data">
+          <div><input type="file" name="receipt" accept=".pdf,image/*"></div>
+          <div><input type="text" name="notes" placeholder="Payment notes (optional)" style="width: 240px;"></div>
+          <button type="submit">Director Pay (Above Limit)</button>
+        </form>
+        <small>Finance pays if within limit.</small>
+      {% else %}
+        —
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
 </table>
 {% else %}
-<p>No pending approvals.</p>
+<p>No requests found.</p>
 {% endif %}
 
 {% endblock %}

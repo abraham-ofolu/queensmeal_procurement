@@ -1,46 +1,59 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Finance Payments</h2>
-<p><strong>Finance Approval Limit:</strong> ₦{{ limit }}</p>
+<h2>Finance Payments (Limit: {{ finance_limit }})</h2>
 
-{% if payments %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Item</th>
-            <th>Amount</th>
-            <th>Status</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for p in payments %}
-        <tr class="{% if p.amount > limit %}table-warning{% endif %}">
-            <td>{{ p.item }}</td>
-            <td>₦{{ p.amount }}</td>
-            <td>
-                {% if p.amount > limit %}
-                    <span class="text-danger">Director Payment Required</span>
-                {% else %}
-                    Pending Payment
-                {% endif %}
-            </td>
-            <td>
-                {% if p.amount <= limit %}
-                <form method="POST" action="{{ url_for('finance.pay', request_id=p.id) }}">
-                    <button class="btn btn-sm btn-success">Mark as Paid</button>
-                </form>
-                {% else %}
-                    <em>Blocked</em>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+{% if requests %}
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr>
+    <th>ID</th>
+    <th>Item</th>
+    <th>Description</th>
+    <th>Amount</th>
+    <th>Vendor</th>
+    <th>Quotation</th>
+    <th>Pay + Upload Proof</th>
+  </tr>
+
+  {% for r in requests %}
+  <tr>
+    <td>{{ r.id }}</td>
+    <td>{{ r.item }}</td>
+    <td>{{ r.description }}</td>
+    <td>{{ r.amount }}</td>
+    <td>
+      {% if r.vendor %}
+        {{ r.vendor.name }}<br>
+        {{ r.vendor.bank_name }}<br>
+        {{ r.vendor.account_name }}<br>
+        {{ r.vendor.account_number }}
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td>
+      {% if r.quotations and r.quotations|length > 0 %}
+        <a href="{{ r.quotations[0].file_path }}" target="_blank">View</a>
+      {% else %}
+        —
+      {% endif %}
+    </td>
+    <td>
+      <form method="POST" action="{{ url_for('finance.pay', request_id=r.id) }}" enctype="multipart/form-data">
+        <div>
+          <input type="file" name="receipt" accept=".pdf,image/*">
+        </div>
+        <div>
+          <input type="text" name="notes" placeholder="Notes (optional)" style="width: 260px;">
+        </div>
+        <button type="submit">Mark Paid</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
 </table>
 {% else %}
-<p>No approved procurement awaiting payment.</p>
+<p>No approved requests available for Finance payment.</p>
 {% endif %}
 
 {% endblock %}

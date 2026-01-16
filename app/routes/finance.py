@@ -1,22 +1,32 @@
 import os
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
 
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.models.procurement_request import ProcurementRequest
+from app.models.payment import Payment
+
+# Optional: Cloudinary receipt upload (won't break app if Cloudinary isn't installed)
+try:
+    import cloudinary.uploader
+    CLOUDINARY_OK = True
+except Exception:
+    CLOUDINARY_OK = False
+
 
 finance_bp = Blueprint("finance", __name__, url_prefix="/finance")
 
 
-def _role() -> str:
+def _role():
     return (getattr(current_user, "role", "") or "").lower()
 
 
-def _pay_limit() -> Decimal:
-    # You can set FINANCE_PAY_LIMIT on Render env vars (example: 500000)
-    raw = os.getenv("FINANCE_PAY_LIMIT", "500000")
+def _finance_limit():
+    # You can set this in Render ENV as FINANCE_PAYMENT_LIMIT (example: 500000)
+    raw = os.getenv("FINANCE_PAYMENT_LIMIT", "500000")
     try:
         return Decimal(raw)
     except Exception:
@@ -26,41 +36,84 @@ def _pay_limit() -> Decimal:
 @finance_bp.route("/payments", methods=["GET"])
 @login_required
 def payments():
-    if _role() not in {"finance", "director"}:
-        flash("Only Finance/Director can access payments.", "danger")
+    if _role() != "finance":
+        flash("Access denied.", "danger")
         return redirect(url_for("procurement.index"))
 
-    approved = (
-        ProcurementRequest.query.filter_by(status="approved")
-        .order_by(ProcurementRequest.created_at.desc())
-        .all()
+    approved = ProcurementRequest.query.filter(
+        ProcurementRequest.status == "approved"
+    ).order_by(ProcurementRequest.created_at.desc()).all()
+
+    return render_template(
+        "finance/payments.html",
+        requests=approved,
+        finance_limit=_finance_limit()
     )
-    return render_template("finance/payments.html", requests=approved, pay_limit=_pay_limit())
 
 
-@finance_bp.route("/mark-paid/<int:req_id>", methods=["POST"])
+@finance_bp.route("/pay/<int:request_id>", methods=["POST"])
 @login_required
-def mark_paid(req_id: int):
-    if _role() not in {"finance", "director"}:
-        flash("Not allowed.", "danger")
+def pay(request_id):
+    if _role() != "finance":
+        flash("Access denied.", "danger")
+        return redirect(url_for("procurement.index"))
+
+    req = ProcurementRequest.query.get_or_404(request_id)
+
+    if req.status != "approved":
+        flash("Only APPROVED requests can be paid.", "danger")
         return redirect(url_for("finance.payments"))
 
-    pr = ProcurementRequest.query.get_or_404(req_id)
-
-    if pr.status != "approved":
-        flash("Only approved requests can be paid.", "warning")
+    # enforce finance limit
+    try:
+        req_amount = Decimal(str(req.amount))
+    except Exception:
+        flash("Invalid request amount.", "danger")
         return redirect(url_for("finance.payments"))
 
-    limit = _pay_limit()
-
-    # Rules:
-    # - If amount <= limit: Finance can pay
-    # - If amount > limit: ONLY Director can pay
-    if pr.amount is not None and pr.amount > limit and _role() != "director":
-        flash(f"Over limit. Only Director can mark as paid. (Limit: {limit})", "danger")
+    if req_amount > _finance_limit():
+        flash("This request is ABOVE Finance limit. Director must pay.", "warning")
         return redirect(url_for("finance.payments"))
 
-    pr.status = "paid"
-    db.session.commit()
-    flash("Marked as paid.", "success")
+    receipt_file = request.files.get("receipt")
+    notes = (request.form.get("notes") or "").strip() or None
+
+    receipt_url = None
+    if receipt_file and receipt_file.filename:
+        if not CLOUDINARY_OK:
+            flash("Receipt upload not available (Cloudinary not configured).", "warning")
+        else:
+            try:
+                res = cloudinary.uploader.upload(
+                    receipt_file,
+                    resource_type="auto",
+                    folder="queensmeal/procurement/receipts"
+                )
+                receipt_url = res.get("secure_url")
+            except Exception as e:
+                flash(f"Receipt upload failed: {e}", "danger")
+                return redirect(url_for("finance.payments"))
+
+    try:
+        payment = Payment(
+            procurement_request_id=req.id,
+            amount_paid=req_amount,
+            paid_by_user_id=getattr(current_user, "id", None),
+            paid_by_role="finance",
+            receipt_url=receipt_url,
+            receipt_uploaded_at=datetime.utcnow() if receipt_url else None,
+            notes=notes,
+            paid_at=datetime.utcnow(),
+        )
+        db.session.add(payment)
+
+        # Mark request as PAID
+        req.status = "paid"
+
+        db.session.commit()
+        flash("Payment recorded and request marked as PAID.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Could not save payment: {e}", "danger")
+
     return redirect(url_for("finance.payments"))
