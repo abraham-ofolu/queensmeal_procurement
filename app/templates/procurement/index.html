@@ -1,54 +1,61 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <div>
-      <h2 class="mb-0">Procurement Requests</h2>
-      <div class="text-muted">Create, track, and route requests for approval and payment.</div>
-    </div>
 
-    {% if current_user.is_authenticated and (current_user.role|lower) == "procurement" %}
-      <a class="btn btn-primary" href="{{ url_for('procurement.create') }}">Create Request</a>
-    {% endif %}
-  </div>
+<h2>Procurement Requests</h2>
 
-  {% if requests|length == 0 %}
-    <div class="alert alert-info">
-      No requests yet. Click <b>Create Request</b> to submit your first one.
-    </div>
-  {% else %}
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Item</th>
-            <th>Description</th>
-            <th>Vendor</th>
-            <th>Qty</th>
-            <th>Amount</th>
-            <th>Urgent</th>
-            <th>Status</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in requests %}
-            <tr>
-              <td>{{ r.id }}</td>
-              <td>{{ r.item }}</td>
-              <td style="max-width: 320px; white-space: normal;">{{ r.description or "" }}</td>
-              <td>{{ r.vendor.name if r.vendor else "" }}</td>
-              <td>{{ r.quantity }}</td>
-              <td>{{ r.amount }}</td>
-              <td>{% if r.is_urgent %}✅{% else %}—{% endif %}</td>
-              <td>{{ r.status }}</td>
-              <td>{{ r.created_at }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% endif %}
-</div>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Item</th>
+      <th>Vendor</th>
+      <th>Amount</th>
+      <th>Status</th>
+      <th>Quotation</th>
+      <th>Receipt</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in requests %}
+    <tr>
+      <td>#{{ r.id }}</td>
+      <td>{{ r.item }}</td>
+      <td>
+        {% if r.vendor %}
+          {{ r.vendor.name }}
+        {% else %}
+          —
+        {% endif %}
+      </td>
+      <td>{{ r.amount }}</td>
+      <td>{{ r.status|upper }}</td>
+
+      <td>
+        {% if r.quotations and r.quotations|length > 0 %}
+          <a href="{{ r.quotations[-1].file_path }}" target="_blank">View</a>
+        {% else %}
+          —
+        {% endif %}
+      </td>
+
+      <td>
+        {% if r.payments and r.payments|length > 0 %}
+          {% set p = r.payments[-1] %}
+          {% if p.receipt_url %}
+            <a href="{{ p.receipt_url }}" target="_blank">View</a>
+          {% else %}
+            —
+          {% endif %}
+        {% else %}
+          —
+        {% endif %}
+      </td>
+
+      <td>{{ r.created_at }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}
