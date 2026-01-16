@@ -15,11 +15,7 @@ class ProcurementQuotation(db.Model):
 
     file_path = db.Column(db.String(255), nullable=False)
 
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow,
-        nullable=False
-    )
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     procurement_request = db.relationship(
         "ProcurementRequest",

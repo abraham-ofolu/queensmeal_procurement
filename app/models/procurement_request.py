@@ -13,17 +13,9 @@ class ProcurementRequest(db.Model):
 
     is_urgent = db.Column(db.Boolean, default=False, nullable=False)
 
-    status = db.Column(
-        db.String(50),
-        default="pending",
-        nullable=False
-    )
+    status = db.Column(db.String(50), default="pending", nullable=False)
 
-    created_at = db.Column(
-        db.DateTime,
-        default=datetime.utcnow,
-        nullable=False
-    )
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     # 🔗 Vendor
     vendor_id = db.Column(
@@ -37,7 +29,7 @@ class ProcurementRequest(db.Model):
         back_populates="procurement_requests"
     )
 
-    # 🔗 Quotations (THIS IS WHAT WAS MISSING)
+    # 🔗 Quotations
     quotations = db.relationship(
         "ProcurementQuotation",
         back_populates="procurement_request",
