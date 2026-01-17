@@ -9,16 +9,13 @@ from app.routes.director import director_bp
 from app.routes.finance import finance_bp
 from app.routes.audit import audit_bp
 
-from app.audit import init_audit
-
 
 def create_app():
     app = Flask(__name__)
 
     # Basic config
     app.config["SECRET_KEY"] = app.config.get("SECRET_KEY") or "change-me"
-    # SQLALCHEMY_DATABASE_URI should already be coming from env/config in your project:
-    # do NOT hardcode it here if you already set it in Render environment variables.
+    # SQLALCHEMY_DATABASE_URI must come from env (Render) — do NOT hardcode
 
     # Init db
     db.init_app(app)
@@ -31,7 +28,12 @@ def create_app():
     app.register_blueprint(finance_bp)
     app.register_blueprint(audit_bp)
 
-    # Init audit trail (captures actor + listens for model changes)
-    init_audit(app)
+    # ✅ SAFE audit initialization (LAZY IMPORT)
+    try:
+        from app.audit import init_audit
+        init_audit(app)
+    except Exception as e:
+        # Audit must NEVER crash the app
+        app.logger.warning(f"Audit not initialized: {e}")
 
     return app
