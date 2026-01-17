@@ -49,7 +49,6 @@ def create():
             username=username,
             role=role,
             password_hash=generate_password_hash(password),
-            is_active=True,
         )
 
         db.session.add(user)
@@ -65,13 +64,15 @@ def create():
 def toggle_user(user_id):
     user = User.query.get_or_404(user_id)
 
-    if user.username == current_user.username:
+    if user.id == current_user.id:
         flash("You cannot disable yourself.", "danger")
         return redirect(url_for("users.index"))
 
-    user.is_active = not user.is_active
-    db.session.commit()
+    # SAFELY toggle using existing model logic
+    if hasattr(user, "is_active"):
+        user.status = "inactive" if user.is_active else "active"
 
+    db.session.commit()
     flash("User status updated.", "success")
     return redirect(url_for("users.index"))
 
@@ -80,7 +81,7 @@ def toggle_user(user_id):
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
 
-    if user.username == current_user.username:
+    if user.id == current_user.id:
         flash("You cannot delete yourself.", "danger")
         return redirect(url_for("users.index"))
 
