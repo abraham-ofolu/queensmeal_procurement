@@ -1,38 +1,142 @@
 {% extends "base.html" %}
+
 {% block content %}
-
 <div class="container mt-4">
-  <h2>Reports Dashboard</h2>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Reports Dashboard</h3>
+    <small class="text-muted">Charts are view-only (safe mode)</small>
+  </div>
 
-  <div class="row mt-4">
+  <!-- KPI Cards -->
+  <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card p-3">
-        <h6>Total Requests</h6>
-        <strong>{{ total_requests }}</strong>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Total Requests</div>
+          <div class="fs-4 fw-bold">{{ kpis.total_requests }}</div>
+        </div>
       </div>
     </div>
 
     <div class="col-md-3">
-      <div class="card p-3">
-        <h6>Total Requested</h6>
-        <strong>₦{{ "{:,.2f}".format(total_requested) }}</strong>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Approved</div>
+          <div class="fs-4 fw-bold">{{ kpis.approved_requests }}</div>
+        </div>
       </div>
     </div>
 
     <div class="col-md-3">
-      <div class="card p-3">
-        <h6>Total Paid</h6>
-        <strong>₦{{ "{:,.2f}".format(total_paid) }}</strong>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Pending</div>
+          <div class="fs-4 fw-bold">{{ kpis.pending_requests }}</div>
+        </div>
       </div>
     </div>
 
     <div class="col-md-3">
-      <div class="card p-3">
-        <h6>Vendors</h6>
-        <strong>{{ vendor_count }}</strong>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Rejected</div>
+          <div class="fs-4 fw-bold">{{ kpis.rejected_requests }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="text-muted">Total Paid</div>
+          <div class="fs-4 fw-bold">₦ {{ "{:,.2f}".format(kpis.total_paid) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Requests (Last 30 Days)</h5>
+          <canvas id="requestsDailyChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Payments by Role</h5>
+          <canvas id="paymentsRoleChart" height="120"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Monthly Spend (Last ~6 Months)</h5>
+          <canvas id="monthlySpendChart" height="90"></canvas>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Chart.js (CDN) - frontend only, zero backend risk -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const requestsDaily = {{ charts.requests_daily | tojson }};
+  const paymentsByRole = {{ charts.payments_by_role | tojson }};
+  const monthlySpend = {{ charts.monthly_spend | tojson }};
+
+  // Requests per day
+  new Chart(document.getElementById("requestsDailyChart"), {
+    type: "bar",
+    data: {
+      labels: requestsDaily.labels,
+      datasets: [{
+        label: "Requests",
+        data: requestsDaily.values
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: { x: { ticks: { maxRotation: 90, minRotation: 45 } } }
+    }
+  });
+
+  // Payments by role
+  new Chart(document.getElementById("paymentsRoleChart"), {
+    type: "pie",
+    data: {
+      labels: paymentsByRole.labels,
+      datasets: [{
+        label: "₦ Paid",
+        data: paymentsByRole.values
+      }]
+    },
+    options: { responsive: true }
+  });
+
+  // Monthly spend
+  new Chart(document.getElementById("monthlySpendChart"), {
+    type: "line",
+    data: {
+      labels: monthlySpend.labels,
+      datasets: [{
+        label: "₦ Paid",
+        data: monthlySpend.values,
+        tension: 0.25
+      }]
+    },
+    options: { responsive: true }
+  });
+</script>
 {% endblock %}

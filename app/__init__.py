@@ -11,7 +11,9 @@ from app.routes.vendors import vendors_bp
 from app.routes.director import director_bp
 from app.routes.finance import finance_bp
 from app.routes.audit import audit_bp
-from app.routes.users import (users_bp)
+from app.routes.users import users_bp
+
+# ✅ NEW (SAFE): Reports
 from app.routes.reports import reports_bp
 
 
@@ -28,7 +30,7 @@ def create_app():
     # ✅ Init DB
     db.init_app(app)
 
-    # ✅ INIT LOGIN MANAGER (THIS WAS MISSING)
+    # ✅ INIT LOGIN MANAGER
     login_manager = LoginManager()
     login_manager.login_view = "auth.login"
     login_manager.init_app(app)
@@ -40,16 +42,17 @@ def create_app():
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # Register blueprints
-    app.register_blueprint(users_bp)
+    # Register blueprints (DO NOT rename these)
     app.register_blueprint(auth_bp)
     app.register_blueprint(procurement_bp)
     app.register_blueprint(vendors_bp)
     app.register_blueprint(director_bp)
     app.register_blueprint(finance_bp)
     app.register_blueprint(audit_bp)
+    app.register_blueprint(users_bp)
+
+    # ✅ NEW: Reports (READ-ONLY)
     app.register_blueprint(reports_bp)
-    
 
     # Init audit (safe, never fatal)
     try:
