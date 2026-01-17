@@ -19,12 +19,49 @@
       </button>
 
       <div class="collapse navbar-collapse" id="navMain">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="/procurement/">Procurement</a></li>
-          <li class="nav-item"><a class="nav-link" href="/vendors/">Vendors</a></li>
-          <li class="nav-item"><a class="nav-link" href="/finance/payments">Finance</a></li>
-          <li class="nav-item"><a class="nav-link" href="/director/approvals">Director</a></li>
+        <ul class="navbar-nav">
+
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('procurement.index') }}">Procurement</a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('vendors.index') }}">Vendors</a>
+    </li>
+
+    {% if current_user.role in ['finance', 'director'] %}
+    <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('finance.payments') }}">Finance</a>
+    </li>
+    {% endif %}
+
+    {% if current_user.role == 'director' %}
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            Director
+        </a>
+        <ul class="dropdown-menu">
+            <li>
+                <a class="dropdown-item" href="{{ url_for('director.approvals') }}">
+                    Approvals
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{{ url_for('users.index') }}">
+                    User Management
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="{{ url_for('audit.index') }}">
+                    Audit Logs
+                </a>
+            </li>
         </ul>
+    </li>
+    {% endif %}
+
+</ul>
+
 
         <ul class="navbar-nav ms-auto">
           {% if current_user.is_authenticated %}
