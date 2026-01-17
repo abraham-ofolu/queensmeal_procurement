@@ -1,129 +1,248 @@
+from __future__ import annotations
+
+import json
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from flask import g, request
+from flask_login import current_user
 from sqlalchemy import event, inspect
+
 from app.extensions import db
-from app.audit_context import get_audit_context
-from app.models.audit_log import AuditLog
 
 
-def _safe_str(v):
-    if v is None:
-        return None
+def _safe_actor() -> Dict[str, Any]:
+    """
+    Build actor context safely (works even if no request context or user not logged in).
+    """
+    actor = {
+        "user_id": None,
+        "role": None,
+        "name": None,
+        "ip": None,
+        "user_agent": None,
+    }
+
     try:
-        return str(v)
+        # request context may not exist in some edge cases
+        actor["ip"] = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote_addr
+        actor["user_agent"] = request.headers.get("User-Agent")
     except Exception:
-        return None
+        pass
 
-
-def _write_log(entity_type, entity_id, action, summary=None, meta=None):
-    ctx = get_audit_context()
-
-    log = AuditLog(
-        entity_type=entity_type,
-        entity_id=entity_id,
-        action=action,
-        summary=summary,
-        actor_user_id=ctx.get("user_id"),
-        actor_username=ctx.get("username"),
-        actor_role=ctx.get("role"),
-        ip_address=ctx.get("ip"),
-        user_agent=ctx.get("ua"),
-        meta=meta or None,
-    )
-    db.session.add(log)
-
-
-def _track_model(model_cls, entity_name, watched_fields=None, status_field=None):
-    watched_fields = watched_fields or []
-
-    @event.listens_for(model_cls, "after_insert")
-    def after_insert(mapper, connection, target):
-        _write_log(
-            entity_name,
-            getattr(target, "id", None),
-            "created",
-            f"{entity_name} created",
-        )
-
-    @event.listens_for(model_cls, "after_update")
-    def after_update(mapper, connection, target):
-        insp = inspect(target)
-
-        if status_field and status_field in insp.attrs:
-            hist = insp.attrs[status_field].history
-            if hist.has_changes():
-                old = hist.deleted[0] if hist.deleted else None
-                new = hist.added[0] if hist.added else None
-                _write_log(
-                    entity_name,
-                    getattr(target, "id", None),
-                    "status_changed",
-                    f"{entity_name} status {old} → {new}",
-                )
-
-        changes = {}
-        for f in watched_fields:
-            if f in insp.attrs and insp.attrs[f].history.has_changes():
-                h = insp.attrs[f].history
-                changes[f] = {
-                    "old": _safe_str(h.deleted[0]) if h.deleted else None,
-                    "new": _safe_str(h.added[0]) if h.added else None,
-                }
-
-        if changes:
-            _write_log(
-                entity_name,
-                getattr(target, "id", None),
-                "updated",
-                f"{entity_name} updated",
-                meta={"changes": changes},
+    try:
+        if getattr(current_user, "is_authenticated", False):
+            actor["user_id"] = getattr(current_user, "id", None)
+            actor["role"] = getattr(current_user, "role", None)
+            # your User model might have full_name/name/username
+            actor["name"] = (
+                getattr(current_user, "full_name", None)
+                or getattr(current_user, "name", None)
+                or getattr(current_user, "username", None)
             )
+    except Exception:
+        pass
+
+    return actor
 
 
-def init_audit(app):
-    from flask import request
-    from flask_login import current_user
-    from app.audit_context import set_audit_context
+def _to_jsonable(value: Any) -> Any:
+    """
+    Convert values to JSON-safe forms.
+    """
+    if isinstance(value, (datetime,)):
+        return value.isoformat()
+    try:
+        json.dumps(value)
+        return value
+    except Exception:
+        return str(value)
+
+
+def _extract_changes(obj: Any) -> Dict[str, Dict[str, Any]]:
+    """
+    Return {"field": {"old": ..., "new": ...}} for updated fields.
+    """
+    changes: Dict[str, Dict[str, Any]] = {}
+    state = inspect(obj)
+
+    for attr in state.mapper.column_attrs:
+        key = attr.key
+        hist = state.attrs[key].history
+        if not hist.has_changes():
+            continue
+
+        old_val = hist.deleted[0] if hist.deleted else None
+        new_val = hist.added[0] if hist.added else getattr(obj, key, None)
+
+        changes[key] = {
+            "old": _to_jsonable(old_val),
+            "new": _to_jsonable(new_val),
+        }
+
+    return changes
+
+
+def init_audit(app) -> None:
+    """
+    Initializes audit trail hooks. Safe + idempotent.
+
+    - Adds request actor context in flask.g
+    - Adds SQLAlchemy session hook to create AuditLog rows for tracked models
+    """
+    # Prevent double-registration (Render reloads, etc.)
+    if getattr(app, "_AUDIT_INITIALIZED", False):
+        return
+    app._AUDIT_INITIALIZED = True
+
+    # Import here to avoid circular imports at module import time
+    from app.models.audit_log import AuditLog
+
+    # Track these models (import inside try so app won't crash if a model path changes)
+    tracked_classes = []
+    try:
+        from app.models.procurement_request import ProcurementRequest
+        tracked_classes.append(ProcurementRequest)
+    except Exception:
+        pass
+    try:
+        from app.models.procurement_quotation import ProcurementQuotation
+        tracked_classes.append(ProcurementQuotation)
+    except Exception:
+        pass
+    try:
+        from app.models.payment import Payment
+        tracked_classes.append(Payment)
+    except Exception:
+        pass
+    try:
+        from app.models.vendor import Vendor
+        tracked_classes.append(Vendor)
+    except Exception:
+        pass
+    try:
+        from app.models.user import User
+        tracked_classes.append(User)
+    except Exception:
+        pass
+
+    tracked_tuple = tuple(tracked_classes)
 
     @app.before_request
-    def capture_actor():
-        if hasattr(current_user, "is_authenticated") and current_user.is_authenticated:
-            set_audit_context({
-                "user_id": current_user.id,
-                "username": getattr(current_user, "username", None),
-                "role": getattr(current_user, "role", None),
-                "ip": request.headers.get("X-Forwarded-For", request.remote_addr),
-                "ua": (request.user_agent.string or "")[:255],
-            })
-        else:
-            set_audit_context({})
+    def _audit_before_request():
+        # Store actor on g for the current request
+        g.audit_actor = _safe_actor()
 
-    # Import models HERE to avoid circular imports
-    from app.models.procurement_request import ProcurementRequest
-    from app.models.vendor import Vendor
-    from app.models.payment import Payment
-    from app.models.procurement_quotation import ProcurementQuotation
+    def _get_actor_from_g() -> Dict[str, Any]:
+        try:
+            return getattr(g, "audit_actor", None) or _safe_actor()
+        except Exception:
+            return _safe_actor()
 
-    _track_model(
-        ProcurementRequest,
-        "ProcurementRequest",
-        watched_fields=["item", "description", "quantity", "amount", "vendor_id", "is_urgent"],
-        status_field="status",
-    )
+    def _is_tracked(obj: Any) -> bool:
+        if not tracked_tuple:
+            return False
+        return isinstance(obj, tracked_tuple)
 
-    _track_model(
-        Vendor,
-        "Vendor",
-        watched_fields=["name", "phone", "email", "bank_name", "account_name", "account_number"],
-    )
+    def _entity_type(obj: Any) -> str:
+        return obj.__class__.__name__
 
-    _track_model(
-        Payment,
-        "Payment",
-        watched_fields=["amount", "amount_paid", "paid_by_role", "paid_by_name", "receipt_url", "notes"],
-        status_field="status",
-    )
+    def _entity_id(obj: Any) -> Optional[str]:
+        try:
+            val = getattr(obj, "id", None)
+            return str(val) if val is not None else None
+        except Exception:
+            return None
 
-    _track_model(
-        ProcurementQuotation,
-        "ProcurementQuotation",
-        watched_fields=["file_path"],
-    )
+    # IMPORTANT:
+    # Adding objects inside flush can cause recursion, so we guard using session.info flag.
+    def _after_flush(session, flush_context):
+        if session.info.get("_audit_skip", False):
+            return
+
+        logs = []
+        actor = _get_actor_from_g()
+
+        # New objects
+        for obj in list(session.new):
+            if isinstance(obj, AuditLog):
+                continue
+            if not _is_tracked(obj):
+                continue
+            logs.append(
+                AuditLog(
+                    entity_type=_entity_type(obj),
+                    entity_id=_entity_id(obj),
+                    action="create",
+                    changes={},  # for create we can keep empty or snapshot later
+                    actor_user_id=actor.get("user_id"),
+                    actor_role=actor.get("role"),
+                    actor_name=actor.get("name"),
+                    ip_address=actor.get("ip"),
+                    user_agent=actor.get("user_agent"),
+                    created_at=datetime.utcnow(),
+                )
+            )
+
+        # Updated objects
+        for obj in list(session.dirty):
+            if isinstance(obj, AuditLog):
+                continue
+            if not _is_tracked(obj):
+                continue
+            if not session.is_modified(obj, include_collections=False):
+                continue
+
+            changes = _extract_changes(obj)
+            if not changes:
+                continue
+
+            logs.append(
+                AuditLog(
+                    entity_type=_entity_type(obj),
+                    entity_id=_entity_id(obj),
+                    action="update",
+                    changes=changes,
+                    actor_user_id=actor.get("user_id"),
+                    actor_role=actor.get("role"),
+                    actor_name=actor.get("name"),
+                    ip_address=actor.get("ip"),
+                    user_agent=actor.get("user_agent"),
+                    created_at=datetime.utcnow(),
+                )
+            )
+
+        # Deleted objects
+        for obj in list(session.deleted):
+            if isinstance(obj, AuditLog):
+                continue
+            if not _is_tracked(obj):
+                continue
+            logs.append(
+                AuditLog(
+                    entity_type=_entity_type(obj),
+                    entity_id=_entity_id(obj),
+                    action="delete",
+                    changes={},
+                    actor_user_id=actor.get("user_id"),
+                    actor_role=actor.get("role"),
+                    actor_name=actor.get("name"),
+                    ip_address=actor.get("ip"),
+                    user_agent=actor.get("user_agent"),
+                    created_at=datetime.utcnow(),
+                )
+            )
+
+        if not logs:
+            return
+
+        # Prevent recursion: add logs once, then skip if flush happens again
+        session.info["_audit_skip"] = True
+        try:
+            session.add_all(logs)
+        finally:
+            session.info["_audit_skip"] = False
+
+    # Hook into Flask-SQLAlchemy session
+    # db.session is a scoped_session, but event works on it
+    event.listen(db.session, "after_flush", _after_flush)
