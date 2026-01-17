@@ -1,7 +1,33 @@
-<td>
-  {% if p.receipt_url %}
-    <a href="{{ p.receipt_url }}" target="_blank">View</a>
-  {% else %}
-    —
-  {% endif %}
-</td>
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Finance Payments</h2>
+
+<table border="1" cellpadding="6">
+  <tr>
+    <th>Item</th>
+    <th>Amount</th>
+    <th>Status</th>
+    <th>Action</th>
+  </tr>
+
+  {% for r in requests %}
+  <tr>
+    <td>{{ r.item }}</td>
+    <td>{{ r.amount }}</td>
+    <td>{{ r.status }}</td>
+    <td>
+      {% if r.status == "approved" %}
+      <form method="POST" action="{{ url_for('finance.pay', request_id=r.id) }}">
+        <input type="number" step="0.01" name="amount_paid" required>
+        <button type="submit">Pay</button>
+      </form>
+      {% else %}
+        —
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}
