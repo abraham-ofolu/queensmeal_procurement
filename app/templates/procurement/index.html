@@ -1,61 +1,53 @@
 {% extends "base.html" %}
 {% block content %}
+<div class="container" style="max-width: 1100px;">
 
-<h2>Procurement Requests</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+    <div>
+      <h2>Procurement Requests</h2>
+      <p style="opacity:0.8;">Create, track, and route requests for approval and payment.</p>
+    </div>
 
-<table class="table table-bordered">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Item</th>
-      <th>Vendor</th>
-      <th>Amount</th>
-      <th>Status</th>
-      <th>Quotation</th>
-      <th>Receipt</th>
-      <th>Created</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for r in requests %}
-    <tr>
-      <td>#{{ r.id }}</td>
-      <td>{{ r.item }}</td>
-      <td>
-        {% if r.vendor %}
-          {{ r.vendor.name }}
-        {% else %}
-          —
+    {% if current_user.role|lower == 'procurement' %}
+      <a href="{{ url_for('procurement.create') }}" class="btn btn-primary">
+        + Create Request
+      </a>
+    {% endif %}
+  </div>
+
+  <div class="table-responsive" style="margin-top:16px;">
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Item</th>
+          <th>Qty</th>
+          <th>Amount</th>
+          <th>Vendor</th>
+          <th>Status</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+        <tr>
+          <td>#{{ r.id }}</td>
+          <td>{{ r.item }}</td>
+          <td>{{ r.quantity }}</td>
+          <td>{{ r.amount }}</td>
+          <td>{{ r.vendor.name if r.vendor else '-' }}</td>
+          <td><b>{{ r.status }}</b></td>
+          <td>{{ r.created_at }}</td>
+        </tr>
+        {% endfor %}
+        {% if requests|length == 0 %}
+        <tr>
+          <td colspan="7">No requests yet.</td>
+        </tr>
         {% endif %}
-      </td>
-      <td>{{ r.amount }}</td>
-      <td>{{ r.status|upper }}</td>
+      </tbody>
+    </table>
+  </div>
 
-      <td>
-        {% if r.quotations and r.quotations|length > 0 %}
-          <a href="{{ r.quotations[-1].file_path }}" target="_blank">View</a>
-        {% else %}
-          —
-        {% endif %}
-      </td>
-
-      <td>
-        {% if r.payments and r.payments|length > 0 %}
-          {% set p = r.payments[-1] %}
-          {% if p.receipt_url %}
-            <a href="{{ p.receipt_url }}" target="_blank">View</a>
-          {% else %}
-            —
-          {% endif %}
-        {% else %}
-          —
-        {% endif %}
-      </td>
-
-      <td>{{ r.created_at }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-
+</div>
 {% endblock %}
