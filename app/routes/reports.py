@@ -38,7 +38,7 @@ def index():
     if not _require_role("director", "finance", "audit"):
         return redirect(url_for("procurement.index"))
 
-    # ---- Filters (SAFE defaults) ----
+    # ---------------- Filters (SAFE DEFAULTS) ----------------
     role_filter = request.args.get("paid_by_role") or "all"
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
@@ -50,7 +50,7 @@ def index():
         start_dt = datetime.utcnow() - timedelta(days=29)
         end_dt = datetime.utcnow()
 
-    # ---- KPIs ----
+    # ---------------- KPIs ----------------
     total_requests = db.session.query(func.count(ProcurementRequest.id)).scalar() or 0
 
     approved_requests = (
@@ -86,11 +86,14 @@ def index():
 
     total_paid = payments_q.with_entities(func.coalesce(func.sum(paid_expr), 0)).scalar() or 0
 
-    # ---- Charts ----
+    # ---------------- Charts ----------------
 
     # Requests per day
     day_rows = (
-        db.session.query(func.date(ProcurementRequest.created_at), func.count())
+        db.session.query(
+            func.date(ProcurementRequest.created_at).label("day"),
+            func.count(ProcurementRequest.id),
+        )
         .filter(
             ProcurementRequest.created_at >= start_dt,
             ProcurementRequest.created_at <= end_dt,
@@ -101,13 +104,18 @@ def index():
     )
 
     day_map = {str(r[0]): int(r[1]) for r in day_rows}
-    days = [(start_dt.date() + timedelta(days=i)).isoformat()
-            for i in range((end_dt.date() - start_dt.date()).days + 1)]
+    days = [
+        (start_dt.date() + timedelta(days=i)).isoformat()
+        for i in range((end_dt.date() - start_dt.date()).days + 1)
+    ]
     day_values = [day_map.get(d, 0) for d in days]
 
     # Payments by role
     role_rows = (
-        payments_q.with_entities(func.lower(Payment.paid_by_role), func.sum(paid_expr))
+        payments_q.with_entities(
+            func.lower(Payment.paid_by_role),
+            func.sum(paid_expr),
+        )
         .group_by(func.lower(Payment.paid_by_role))
         .all()
     )
@@ -115,14 +123,19 @@ def index():
     role_labels = [r[0] or "unknown" for r in role_rows]
     role_values = [float(r[1] or 0) for r in role_rows]
 
-    # Monthly spend
+    # Monthly spend  ✅ FIXED GROUP BY
+    month_expr = func.to_char(
+        func.date_trunc("month", func.coalesce(Payment.paid_at, Payment.created_at)),
+        "YYYY-MM",
+    )
+
     month_rows = (
         payments_q.with_entities(
-            func.to_char(func.date_trunc("month", func.coalesce(Payment.paid_at, Payment.created_at)), "YYYY-MM"),
+            month_expr,
             func.sum(paid_expr),
         )
-        .group_by(1)
-        .order_by(1)
+        .group_by(month_expr)
+        .order_by(month_expr)
         .all()
     )
 
