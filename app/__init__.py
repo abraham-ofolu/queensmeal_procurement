@@ -1,5 +1,6 @@
 from flask import Flask
 from app.extensions import db
+from app.config import Config
 
 # Blueprints
 from app.routes.auth import auth_bp
@@ -13,11 +14,14 @@ from app.routes.audit import audit_bp
 def create_app():
     app = Flask(__name__)
 
-    # Basic config
-    app.config["SECRET_KEY"] = app.config.get("SECRET_KEY") or "change-me"
-    # SQLALCHEMY_DATABASE_URI must come from env (Render) — do NOT hardcode
+    # ✅ LOAD CONFIG FIRST (THIS WAS MISSING)
+    app.config.from_object(Config)
 
-    # Init db
+    # 🔴 HARD FAIL if DB URI missing (prevents silent loops)
+    if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+        raise RuntimeError("SQLALCHEMY_DATABASE_URI is NOT loaded into Flask config")
+
+    # Init DB AFTER config
     db.init_app(app)
 
     # Register blueprints
@@ -28,12 +32,11 @@ def create_app():
     app.register_blueprint(finance_bp)
     app.register_blueprint(audit_bp)
 
-    # ✅ SAFE audit initialization (LAZY IMPORT)
+    # Init audit safely (never blocks boot)
     try:
         from app.audit import init_audit
         init_audit(app)
     except Exception as e:
-        # Audit must NEVER crash the app
-        app.logger.warning(f"Audit not initialized: {e}")
+        app.logger.warning(f"AUDIT DISABLED: {e}")
 
     return app
