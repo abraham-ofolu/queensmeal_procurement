@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_login import LoginManager
+
 from app.extensions import db
 from app.config import Config
 
@@ -14,15 +16,27 @@ from app.routes.audit import audit_bp
 def create_app():
     app = Flask(__name__)
 
-    # ✅ LOAD CONFIG FIRST (THIS WAS MISSING)
+    # ✅ Load config FIRST
     app.config.from_object(Config)
 
-    # 🔴 HARD FAIL if DB URI missing (prevents silent loops)
+    # Safety check
     if not app.config.get("SQLALCHEMY_DATABASE_URI"):
-        raise RuntimeError("SQLALCHEMY_DATABASE_URI is NOT loaded into Flask config")
+        raise RuntimeError("SQLALCHEMY_DATABASE_URI is missing")
 
-    # Init DB AFTER config
+    # ✅ Init DB
     db.init_app(app)
+
+    # ✅ INIT LOGIN MANAGER (THIS WAS MISSING)
+    login_manager = LoginManager()
+    login_manager.login_view = "auth.login"
+    login_manager.init_app(app)
+
+    # User loader
+    from app.models.user import User
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -32,7 +46,7 @@ def create_app():
     app.register_blueprint(finance_bp)
     app.register_blueprint(audit_bp)
 
-    # Init audit safely (never blocks boot)
+    # Init audit (safe, never fatal)
     try:
         from app.audit import init_audit
         init_audit(app)
