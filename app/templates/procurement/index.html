@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container" style="max-width: 1100px;">
+<div class="container" style="max-width: 1200px;">
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
     <div>
@@ -24,30 +24,72 @@
           <th>Qty</th>
           <th>Amount</th>
           <th>Vendor</th>
+          <th>Urgent</th>
+          <th>Quotation</th>
+          <th>Receipt</th>
           <th>Status</th>
           <th>Created</th>
         </tr>
       </thead>
+
       <tbody>
         {% for r in requests %}
         <tr>
           <td>#{{ r.id }}</td>
-          <td>{{ r.item }}</td>
+          <td>
+            <div><b>{{ r.item }}</b></div>
+            {% if r.description %}
+              <div style="font-size: 12px; opacity:0.8;">{{ r.description }}</div>
+            {% endif %}
+          </td>
           <td>{{ r.quantity }}</td>
           <td>{{ r.amount }}</td>
-          <td>{{ r.vendor.name if r.vendor else '-' }}</td>
+          <td>
+            {% if r.vendor %}
+              <div><b>{{ r.vendor.name }}</b></div>
+              <div style="font-size:12px; opacity:0.85;">
+                {{ r.vendor.bank_name or '' }} {{ r.vendor.account_number or '' }}
+              </div>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{% if r.is_urgent %}<span class="badge bg-danger">YES</span>{% else %}-{% endif %}</td>
+
+          <td>
+            {% if r.quotations and r.quotations|length > 0 %}
+              <a href="{{ r.quotations[0].file_path }}" target="_blank">View</a>
+              <span style="font-size:12px; opacity:0.75;">({{ r.quotations|length }})</span>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+
+          <td>
+            {% if r.payments and r.payments|length > 0 %}
+              {% set p = r.payments[-1] %}
+              {% if p.receipt_url %}
+                <a href="{{ p.receipt_url }}" target="_blank">View</a>
+              {% else %}
+                -
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+
           <td><b>{{ r.status }}</b></td>
           <td>{{ r.created_at }}</td>
         </tr>
         {% endfor %}
+
         {% if requests|length == 0 %}
         <tr>
-          <td colspan="7">No requests yet.</td>
+          <td colspan="10">No requests yet.</td>
         </tr>
         {% endif %}
       </tbody>
     </table>
   </div>
-
 </div>
 {% endblock %}
