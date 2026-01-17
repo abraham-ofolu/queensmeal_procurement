@@ -1,28 +1,31 @@
-# app/routes/audit.py
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 
-from app.extensions import db
 from app.models.audit_log import AuditLog
 
 audit_bp = Blueprint("audit", __name__, url_prefix="/audit")
 
 
-@audit_bp.route("/")
-@login_required
-def audit_logs():
-    # only director can view full audit log (simple rule)
-    if getattr(current_user, "role", None) != "director":
-        logs = (
-            AuditLog.query.order_by(AuditLog.created_at.desc())
-            .limit(100)
-            .all()
-        )
-    else:
-        logs = (
-            AuditLog.query.order_by(AuditLog.created_at.desc())
-            .limit(500)
-            .all()
-        )
+def _role():
+    return (getattr(current_user, "role", "") or "").lower()
 
-    return render_template("audit/list.html", logs=logs)
+
+@audit_bp.route("/", methods=["GET"])
+@login_required
+def index():
+    if _role() != "director":
+        flash("You are not allowed to view the audit trail.", "danger")
+        return redirect(url_for("procurement.index"))
+
+    entity = (request.args.get("entity") or "").strip()
+    action = (request.args.get("action") or "").strip()
+
+    q = AuditLog.query.order_by(AuditLog.created_at.desc())
+
+    if entity:
+        q = q.filter(AuditLog.entity_type.ilike(f"%{entity}%"))
+    if action:
+        q = q.filter(AuditLog.action.ilike(f"%{action}%"))
+
+    logs = q.limit(500).all()  # last 500 actions
+    return render_template("audit/index.html", logs=logs, entity=entity, action=action)

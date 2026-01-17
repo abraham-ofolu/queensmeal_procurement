@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Audit Trail</h2>
+<p style="color:#666;">Last 500 activities (most recent first).</p>
+
+<form method="get" style="display:flex; gap:10px; margin-bottom:15px;">
+  <input name="entity" placeholder="Entity (e.g. Payment)" value="{{ entity }}" />
+  <input name="action" placeholder="Action (e.g. status_changed)" value="{{ action }}" />
+  <button type="submit">Filter</button>
+  <a href="/audit/" style="padding-top:6px;">Clear</a>
+</form>
+
+<table class="table table-bordered table-sm">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Actor</th>
+      <th>Role</th>
+      <th>Action</th>
+      <th>Entity</th>
+      <th>Summary</th>
+      <th>IP</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for l in logs %}
+    <tr>
+      <td>{{ l.created_at }}</td>
+      <td>{{ l.actor_username or "-" }}</td>
+      <td>{{ l.actor_role or "-" }}</td>
+      <td>{{ l.action }}</td>
+      <td>{{ l.entity_type }}{% if l.entity_id %} #{{ l.entity_id }}{% endif %}</td>
+      <td>{{ l.summary or "-" }}</td>
+      <td>{{ l.ip_address or "-" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}
