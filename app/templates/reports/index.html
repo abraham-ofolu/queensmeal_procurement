@@ -2,76 +2,37 @@
 {% block content %}
 
 <div class="container mt-4">
-    <h4>Reports Dashboard</h4>
+  <h2>Reports Dashboard</h2>
 
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>Total Requests</h6>
-                    <h4>{{ total_requests }}</h4>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>Total Requested</h6>
-                    <h4>₦{{ "{:,.2f}".format(total_requested_amount) }}</h4>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h6>Total Paid</h6>
-                    <h4>₦{{ "{:,.2f}".format(total_paid) }}</h4>
-                </div>
-            </div>
-        </div>
+  <div class="row mt-4">
+    <div class="col-md-3">
+      <div class="card p-3">
+        <h6>Total Requests</h6>
+        <strong>{{ total_requests }}</strong>
+      </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <canvas id="statusChart"></canvas>
-        </div>
+    <div class="col-md-3">
+      <div class="card p-3">
+        <h6>Total Requested</h6>
+        <strong>₦{{ "{:,.2f}".format(total_requested) }}</strong>
+      </div>
     </div>
+
+    <div class="col-md-3">
+      <div class="card p-3">
+        <h6>Total Paid</h6>
+        <strong>₦{{ "{:,.2f}".format(total_paid) }}</strong>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card p-3">
+        <h6>Vendors</h6>
+        <strong>{{ vendor_count }}</strong>
+      </div>
+    </div>
+  </div>
 </div>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-const ctx = document.getElementById('statusChart').getContext('2d');
-
-new Chart(ctx, {
-    type: 'pie',
-    data: {
-        labels: ['Approved', 'Pending', 'Rejected'],
-        datasets: [{
-            data: [
-                {{ approved_count }},
-                {{ pending_count }},
-                {{ rejected_count }}
-            ],
-            backgroundColor: [
-                '#28a745',
-                '#ffc107',
-                '#dc3545'
-            ]
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'bottom'
-            }
-        }
-    }
-});
-</script>
 
 {% endblock %}

@@ -12,6 +12,7 @@ from app.routes.director import director_bp
 from app.routes.finance import finance_bp
 from app.routes.audit import audit_bp
 from app.routes.users import (users_bp)
+from app.routes.reports import reports_bp
 
 
 def create_app():
@@ -47,6 +48,8 @@ def create_app():
     app.register_blueprint(director_bp)
     app.register_blueprint(finance_bp)
     app.register_blueprint(audit_bp)
+    app.register_blueprint(reports_bp)
+    
 
     # Init audit (safe, never fatal)
     try:
