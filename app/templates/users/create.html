@@ -1,43 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="container mt-4" style="max-width: 700px;">
-  <div class="mb-3">
-    <h3>Create New User</h3>
-    <p class="text-muted mb-0">Only the Director can create users.</p>
-  </div>
+<h2>Create User</h2>
 
-  <div class="card">
-    <div class="card-body">
-      <form method="POST" action="{{ url_for('users.create') }}">
-        <div class="mb-3">
-          <label class="form-label">Username</label>
-          <input class="form-control" type="text" name="username" placeholder="e.g. procurement" required />
-        </div>
+<form method="post">
+    <div class="mb-3">
+        <label>Username</label>
+        <input name="username" class="form-control" required>
+    </div>
 
-        <div class="mb-3">
-          <label class="form-label">Password</label>
-          <input class="form-control" type="password" name="password" placeholder="Set a strong password" required />
-        </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <input type="password" name="password" class="form-control" required>
+    </div>
 
-        <div class="mb-3">
-          <label class="form-label">Department / Role</label>
-          <select class="form-select" name="role" required>
+    <div class="mb-3">
+        <label>Role</label>
+        <select name="role" class="form-control" required>
             <option value="">-- Select Role --</option>
             <option value="procurement">Procurement</option>
             <option value="finance">Finance</option>
             <option value="audit">Audit</option>
             <option value="director">Director</option>
-          </select>
-        </div>
-
-        <div class="d-flex gap-2">
-          <button class="btn btn-primary" type="submit">Create User</button>
-          <a class="btn btn-outline-secondary" href="{{ url_for('users.index') }}">Back</a>
-        </div>
-      </form>
+        </select>
     </div>
-  </div>
-</div>
+
+    <button class="btn btn-success">Create User</button>
+</form>
 
 {% endblock %}

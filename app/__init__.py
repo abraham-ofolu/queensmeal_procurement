@@ -11,6 +11,7 @@ from app.routes.vendors import vendors_bp
 from app.routes.director import director_bp
 from app.routes.finance import finance_bp
 from app.routes.audit import audit_bp
+from app.routes.users import (users_bp)
 
 
 def create_app():
@@ -39,6 +40,7 @@ def create_app():
         return User.query.get(int(user_id))
 
     # Register blueprints
+    app.register_blueprint(users_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(procurement_bp)
     app.register_blueprint(vendors_bp)
