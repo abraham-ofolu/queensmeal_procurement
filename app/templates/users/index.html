@@ -1,37 +1,49 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container mt-4">
-    <h2>User Management</h2>
 
-    <table class="table table-bordered mt-3">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.role }}</td>
-                <td>
-                    {% if user.role != 'director' %}
-                    <form method="POST" action="{{ url_for('users.delete_user', user_id=user.id) }}"
-                          onsubmit="return confirm('Delete this user?');">
-                        <button class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                    {% else %}
-                    <span class="text-muted">Protected</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+<h3>User Management</h3>
+
+<a href="{{ url_for('users.create') }}" class="btn btn-primary mb-3">
+  Create User
+</a>
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Username</th>
+      <th>Role</th>
+      <th>Status</th>
+      <th width="220">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.username }}</td>
+      <td>{{ u.role }}</td>
+      <td>
+        {% if u.is_active %}
+          <span class="badge bg-success">Active</span>
+        {% else %}
+          <span class="badge bg-secondary">Disabled</span>
+        {% endif %}
+      </td>
+      <td>
+        <form method="post" action="{{ url_for('users.toggle_user', user_id=u.id) }}" style="display:inline;">
+          <button class="btn btn-sm btn-warning">
+            {% if u.is_active %}Disable{% else %}Enable{% endif %}
+          </button>
+        </form>
+
+        <form method="post" action="{{ url_for('users.delete_user', user_id=u.id) }}"
+              style="display:inline;"
+              onsubmit="return confirm('Delete this user?');">
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 {% endblock %}

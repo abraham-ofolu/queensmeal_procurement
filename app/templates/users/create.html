@@ -1,31 +1,32 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Create User</h2>
+<h3>Create User</h3>
 
 <form method="post">
-    <div class="mb-3">
-        <label>Username</label>
-        <input name="username" class="form-control" required>
-    </div>
+  <div class="mb-3">
+    <label>Username</label>
+    <input name="username" class="form-control" required>
+  </div>
 
-    <div class="mb-3">
-        <label>Password</label>
-        <input type="password" name="password" class="form-control" required>
-    </div>
+  <div class="mb-3">
+    <label>Password</label>
+    <input type="password" name="password" class="form-control" required>
+  </div>
 
-    <div class="mb-3">
-        <label>Role</label>
-        <select name="role" class="form-control" required>
-            <option value="">-- Select Role --</option>
-            <option value="procurement">Procurement</option>
-            <option value="finance">Finance</option>
-            <option value="audit">Audit</option>
-            <option value="director">Director</option>
-        </select>
-    </div>
+  <div class="mb-3">
+    <label>Role</label>
+    <select name="role" class="form-control" required>
+      <option value="">-- Select Role --</option>
+      <option value="procurement">Procurement</option>
+      <option value="finance">Finance</option>
+      <option value="audit">Audit</option>
+      <option value="director">Director</option>
+    </select>
+  </div>
 
-    <button class="btn btn-success">Create User</button>
+  <button class="btn btn-success">Create User</button>
+  <a href="{{ url_for('users.index') }}" class="btn btn-secondary">Cancel</a>
 </form>
 
 {% endblock %}
