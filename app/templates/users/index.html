@@ -1,41 +1,37 @@
 {% extends "base.html" %}
+
 {% block content %}
+<div class="container mt-4">
+    <h2>User Management</h2>
 
-<h2>Director – User Management</h2>
-
-<a href="{{ url_for('users.create') }}" class="btn btn-primary">Create User</a>
-
-<table class="table mt-3">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for u in users %}
-        <tr>
-            <td>{{ u.username }}</td>
-            <td>{{ u.role }}</td>
-            <td>
-                {% if u.is_active %}
-                    Active
-                {% else %}
-                    Disabled
-                {% endif %}
-            </td>
-            <td>
-                {% if u.is_active and u.role != 'director' %}
-                <form method="post" action="{{ url_for('users.disable', user_id=u.id) }}">
-                    <button class="btn btn-danger btn-sm">Disable</button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    {% if user.role != 'director' %}
+                    <form method="POST" action="{{ url_for('users.delete_user', user_id=user.id) }}"
+                          onsubmit="return confirm('Delete this user?');">
+                        <button class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                    {% else %}
+                    <span class="text-muted">Protected</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
